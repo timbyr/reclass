@@ -17,7 +17,7 @@ import shlex
 import string
 import yaml
 from reclass.output.yaml_outputter import ExplicitDumper
-from reclass.datatypes import Entity, Classes, Parameters
+from reclass.datatypes import Entity, Classes, Parameters, Exports
 from reclass.errors import MappingFormatError, ClassNotFound
 from reclass.defaults import AUTOMATIC_RECLASS_PARAMETERS
 
@@ -120,7 +120,6 @@ class Core(object):
         else:
             return Parameters()
 
-
     def _nodeinfo(self, nodename, exports):
         node_entity = self._storage.get_node(nodename)
         base_entity = Entity(name='base')
@@ -155,7 +154,7 @@ class Core(object):
             return False
 
     def nodeinfo(self, nodename):
-        original_exports = Parameters(self._storage.get_exports())
+        original_exports = Exports(self._storage.get_exports())
         exports = copy.deepcopy(original_exports)
         original_exports.render_simple()
         ret = self._nodeinfo_as_dict(nodename, self._nodeinfo(nodename, exports))
@@ -163,7 +162,7 @@ class Core(object):
         return ret
 
     def inventory(self):
-        original_exports = Parameters(self._storage.get_exports())
+        original_exports = Exports(self._storage.get_exports())
         exports = copy.deepcopy(original_exports)
         original_exports.render_simple()
         nodes = { key for key in exports.as_dict()}
