@@ -23,14 +23,11 @@ def ext_pillar(minion_id, pillar,
                inventory_base_uri=OPT_INVENTORY_BASE_URI,
                nodes_uri=OPT_NODES_URI,
                classes_uri=OPT_CLASSES_URI,
-               exports_uri=OPT_EXPORTS_URI,
                class_mappings=None,
                propagate_pillar_data_to_reclass=False):
 
-    nodes_uri, classes_uri, exports_uri = path_mangler(inventory_base_uri, nodes_uri,
-                                                       classes_uri, exports_uri)
-    storage = get_storage(storage_type, nodes_uri, classes_uri,
-                          exports_uri, default_environment='base')
+    nodes_uri, classes_uri = path_mangler(inventory_base_uri, nodes_uri, classes_uri)
+    storage = get_storage(storage_type, nodes_uri, classes_uri, default_environment='base')
     input_data = None
     if propagate_pillar_data_to_reclass:
         input_data = pillar
@@ -48,13 +45,10 @@ def ext_pillar(minion_id, pillar,
 
 def top(minion_id, storage_type=OPT_STORAGE_TYPE,
         inventory_base_uri=OPT_INVENTORY_BASE_URI, nodes_uri=OPT_NODES_URI,
-        classes_uri=OPT_CLASSES_URI, exports_uri=OPT_EXPORTS_URI,
-        class_mappings=None):
+        classes_uri=OPT_CLASSES_URI class_mappings=None):
 
-    nodes_uri, classes_uri, exports_uri = path_mangler(inventory_base_uri, nodes_uri,
-                                                       classes_uri, exports_uri)
-    storage = get_storage(storage_type, nodes_uri, classes_uri,
-                          exports_uri, default_environment='base')
+    nodes_uri, classes_uri = path_mangler(inventory_base_uri, nodes_uri, classes_uri)
+    storage = get_storage(storage_type, nodes_uri, classes_uri, default_environment='base')
     reclass = Core(storage, class_mappings, input_data=None)
 
     # if the minion_id is not None, then return just the applications for the
