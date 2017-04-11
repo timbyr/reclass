@@ -45,7 +45,7 @@ def ext_pillar(minion_id, pillar,
 
 def top(minion_id, storage_type=OPT_STORAGE_TYPE,
         inventory_base_uri=OPT_INVENTORY_BASE_URI, nodes_uri=OPT_NODES_URI,
-        classes_uri=OPT_CLASSES_URI class_mappings=None):
+        classes_uri=OPT_CLASSES_URI, class_mappings=None):
 
     nodes_uri, classes_uri = path_mangler(inventory_base_uri, nodes_uri, classes_uri)
     storage = get_storage(storage_type, nodes_uri, classes_uri, default_environment='base')
