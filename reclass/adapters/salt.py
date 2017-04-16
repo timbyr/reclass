@@ -27,11 +27,11 @@ def ext_pillar(minion_id, pillar,
                propagate_pillar_data_to_reclass=False):
 
     nodes_uri, classes_uri = path_mangler(inventory_base_uri, nodes_uri, classes_uri)
-    storage = get_storage(storage_type, nodes_uri, classes_uri, default_environment='base')
+    storage = get_storage(storage_type, nodes_uri, classes_uri)
     input_data = None
     if propagate_pillar_data_to_reclass:
         input_data = pillar
-    reclass = Core(storage, class_mappings, input_data=input_data)
+    reclass = Core(storage, class_mappings, input_data=input_data, default_environment='base')
 
     data = reclass.nodeinfo(minion_id)
     params = data.get('parameters', {})
@@ -48,8 +48,8 @@ def top(minion_id, storage_type=OPT_STORAGE_TYPE,
         classes_uri=OPT_CLASSES_URI, class_mappings=None):
 
     nodes_uri, classes_uri = path_mangler(inventory_base_uri, nodes_uri, classes_uri)
-    storage = get_storage(storage_type, nodes_uri, classes_uri, default_environment='base')
-    reclass = Core(storage, class_mappings, input_data=None)
+    storage = get_storage(storage_type, nodes_uri, classes_uri)
+    reclass = Core(storage, class_mappings, input_data=None, default_environment='base')
 
     # if the minion_id is not None, then return just the applications for the
     # specific minion, otherwise return the entire top data (which we need for

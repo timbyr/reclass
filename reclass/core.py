@@ -9,9 +9,7 @@
 
 import copy
 import time
-#import types
 import re
-#import sys
 import fnmatch
 import shlex
 import string
@@ -23,10 +21,11 @@ from reclass.defaults import AUTOMATIC_RECLASS_PARAMETERS
 
 class Core(object):
 
-    def __init__(self, storage, class_mappings, input_data=None):
+    def __init__(self, storage, class_mappings, input_data=None, default_environment=None):
         self._storage = storage
         self._class_mappings = class_mappings
         self._input_data = input_data
+        self._default_environment = default_environment
 
     @staticmethod
     def _get_timestamp():
@@ -86,9 +85,12 @@ class Core(object):
         p = Parameters(self._input_data)
         return Entity(parameters=p, name='input data')
 
-    def _recurse_entity(self, entity, merge_base=None, seen=None, nodename=None):
+    def _recurse_entity(self, entity, merge_base=None, seen=None, nodename=None, environment=None):
         if seen is None:
             seen = {}
+
+        if environment is None:
+            environment = self._default_environment
 
         if merge_base is None:
             merge_base = Entity(name='empty (@{0})'.format(nodename))
@@ -96,7 +98,7 @@ class Core(object):
         for klass in entity.classes.as_list():
             if klass not in seen:
                 try:
-                    class_entity = self._storage.get_class(klass)
+                    class_entity = self._storage.get_class(klass, environment)
                 except ClassNotFound, e:
                     e.set_nodename(nodename)
                     raise e
@@ -130,15 +132,17 @@ class Core(object):
 
     def _node_entity(self, nodename):
         node_entity = self._storage.get_node(nodename)
+        if node_entity.environment == None:
+            node_entity.environment = self._default_environment
         base_entity = Entity(name='base')
         base_entity.merge(self._get_class_mappings_entity(node_entity.name))
         base_entity.merge(self._get_input_data_entity())
         base_entity.merge_parameters(self._get_automatic_parameters(nodename))
         seen = {}
-        merge_base = self._recurse_entity(base_entity, seen=seen,
-                                          nodename=base_entity.name)
-        return self._recurse_entity(node_entity, merge_base, seen=seen,
-                                   nodename=node_entity.name)
+        merge_base = self._recurse_entity(base_entity, seen=seen, nodename=base_entity.name,
+                                          environment=node_entity.environment)
+        return self._recurse_entity(node_entity, merge_base, seen=seen, nodename=node_entity.name,
+                                    environment=node_entity.environment)
 
     def _nodeinfo(self, nodename, inventory):
         ret = self._node_entity(nodename)
