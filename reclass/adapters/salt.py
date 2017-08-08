@@ -15,6 +15,7 @@ from reclass.errors import ReclassException
 from reclass.config import find_and_read_configfile, get_options
 from reclass.constants import MODE_NODEINFO
 from reclass.defaults import *
+from reclass.settings import Settings
 from reclass.version import *
 
 def ext_pillar(minion_id, pillar,
@@ -23,7 +24,8 @@ def ext_pillar(minion_id, pillar,
                nodes_uri=OPT_NODES_URI,
                classes_uri=OPT_CLASSES_URI,
                class_mappings=None,
-               propagate_pillar_data_to_reclass=False):
+               propagate_pillar_data_to_reclass=False,
+               **kwargs):
 
     path_mangler = get_path_mangler(storage_type)
     nodes_uri, classes_uri = path_mangler(inventory_base_uri, nodes_uri, classes_uri)
@@ -31,7 +33,8 @@ def ext_pillar(minion_id, pillar,
     input_data = None
     if propagate_pillar_data_to_reclass:
         input_data = pillar
-    reclass = Core(storage, class_mappings, input_data=input_data, default_environment='base')
+    settings = Settings(kwargs)
+    reclass = Core(storage, class_mappings, settings, input_data=input_data)
 
     data = reclass.nodeinfo(minion_id)
     params = data.get('parameters', {})

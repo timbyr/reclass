@@ -14,18 +14,18 @@ import fnmatch
 import shlex
 import string
 import yaml
+from reclass.settings import Settings
 from reclass.output.yaml_outputter import ExplicitDumper
 from reclass.datatypes import Entity, Classes, Parameters, Exports
 from reclass.errors import MappingFormatError, ClassNotFound, ResolveError
-from reclass.defaults import AUTOMATIC_RECLASS_PARAMETERS
 
 class Core(object):
 
-    def __init__(self, storage, class_mappings, input_data=None, default_environment=None):
+    def __init__(self, storage, class_mappings, settings, input_data=None):
         self._storage = storage
         self._class_mappings = class_mappings
+        self._settings = settings
         self._input_data = input_data
-        self._default_environment = default_environment
 
     @staticmethod
     def _get_timestamp():
@@ -60,7 +60,7 @@ class Core(object):
 
     def _get_class_mappings_entity(self, nodename):
         if not self._class_mappings:
-            return Entity(name='empty (class mappings)')
+            return Entity(self._settings, name='empty (class mappings)')
         c = Classes()
         for mapping in self._class_mappings:
             matched = False
@@ -76,29 +76,29 @@ class Core(object):
                     for klass in klasses:
                         c.append_if_new(klass)
 
-        return Entity(classes=c,
+        return Entity(self._settings, classes=c,
                       name='class mappings for node {0}'.format(nodename))
 
     def _get_input_data_entity(self):
         if not self._input_data:
-            return Entity(name='empty (input data)')
-        p = Parameters(self._input_data)
-        return Entity(parameters=p, name='input data')
+            return Entity(self._settings, name='empty (input data)')
+        p = Parameters(self._input_data, self._settings)
+        return Entity(self._settings, parameters=p, name='input data')
 
     def _recurse_entity(self, entity, merge_base=None, seen=None, nodename=None, environment=None):
         if seen is None:
             seen = {}
 
         if environment is None:
-            environment = self._default_environment
+            environment = self._settings.default_environment
 
         if merge_base is None:
-            merge_base = Entity(name='empty (@{0})'.format(nodename))
+            merge_base = Entity(self._settings, name='empty (@{0})'.format(nodename))
 
         for klass in entity.classes.as_list():
             if klass not in seen:
                 try:
-                    class_entity = self._storage.get_class(klass, environment)
+                    class_entity = self._storage.get_class(klass, environment, self._settings)
                 except ClassNotFound, e:
                     e.set_nodename(nodename)
                     raise e
@@ -117,11 +117,11 @@ class Core(object):
         return merge_base
 
     def _get_automatic_parameters(self, nodename, environment):
-        if AUTOMATIC_RECLASS_PARAMETERS:
+        if self._settings.automatic_parameters:
             return Parameters({ '_reclass_': { 'name': { 'full': nodename, 'short': string.split(nodename, '.')[0] },
-                                               'environment': environment } })
+                                               'environment': environment } }, self._settings, '__auto__')
         else:
-            return Parameters()
+            return Parameters({}, self._settings, '')
 
     def _get_inventory(self):
         inventory = {}
@@ -136,10 +136,10 @@ class Core(object):
         return inventory
 
     def _node_entity(self, nodename):
-        node_entity = self._storage.get_node(nodename)
+        node_entity = self._storage.get_node(nodename, self._settings)
         if node_entity.environment == None:
-            node_entity.environment = self._default_environment
-        base_entity = Entity(name='base')
+            node_entity.environment = self._settings.default_environment
+        base_entity = Entity(self._settings, name='base')
         base_entity.merge(self._get_class_mappings_entity(node_entity.name))
         base_entity.merge(self._get_input_data_entity())
         base_entity.merge_parameters(self._get_automatic_parameters(nodename, node_entity.environment))
