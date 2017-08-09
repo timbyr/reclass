@@ -17,7 +17,7 @@ import yaml
 from reclass.settings import Settings
 from reclass.output.yaml_outputter import ExplicitDumper
 from reclass.datatypes import Entity, Classes, Parameters, Exports
-from reclass.errors import MappingFormatError, ClassNotFound, ResolveError, InvQueryError, InterpolationError
+from reclass.errors import MappingFormatError, ClassNotFound, InvQueryClassNotFound, InvQueryError, InterpolationError
 
 class Core(object):
 
@@ -99,8 +99,9 @@ class Core(object):
             if klass not in seen:
                 try:
                     class_entity = self._storage.get_class(klass, environment, self._settings)
-                except ClassNotFound, e:
-                    e.set_nodename(nodename)
+                except ClassNotFound as e:
+                    e.nodename = nodename
+                    e.uri = entity.uri
                     raise
 
                 descent = self._recurse_entity(class_entity, seen=seen,
@@ -137,29 +138,28 @@ class Core(object):
                     raise
 
             if all_envs or node_base.environment == environment:
-                node = self._node_entity(nodename)
+                try:
+                    node = self._node_entity(nodename)
+                except ClassNotFound as e:
+                    raise InvQueryClassNotFound(e)
                 if queries is None:
                     try:
                         node.interpolate_exports()
-                    except ResolveError as e:
+                    except InterpolationError as e:
                         e.nodename = nodename
                 else:
                     node.initialise_interpolation()
                     for p, q in queries:
                         try:
                             node.interpolate_single_export(q)
-                        except ResolveError as e:
+                        except InterpolationError as e:
                             e.nodename = nodename
                             raise InvQueryError(q.contents(), e, context=p, uri=q.uri())
                 inventory[nodename] = node.exports.as_dict()
         return inventory
 
     def _node_entity(self, nodename):
-        try:
-            node_entity = self._storage.get_node(nodename, self._settings)
-        except InterpolationError as e:
-            e.nodename = nodename
-            raise
+        node_entity = self._storage.get_node(nodename, self._settings)
         if node_entity.environment == None:
             node_entity.environment = self._settings.default_environment
         base_entity = Entity(self._settings, name='base')
@@ -167,26 +167,22 @@ class Core(object):
         base_entity.merge(self._get_input_data_entity())
         base_entity.merge_parameters(self._get_automatic_parameters(nodename, node_entity.environment))
         seen = {}
-        merge_base = self._recurse_entity(base_entity, seen=seen, nodename=base_entity.name,
+        merge_base = self._recurse_entity(base_entity, seen=seen, nodename=nodename,
                                           environment=node_entity.environment)
-        return self._recurse_entity(node_entity, merge_base, seen=seen, nodename=node_entity.name,
+        return self._recurse_entity(node_entity, merge_base, seen=seen, nodename=nodename,
                                     environment=node_entity.environment)
 
     def _nodeinfo(self, nodename, inventory):
-        ret = self._node_entity(nodename)
-        ret.initialise_interpolation()
-        if ret.parameters.has_inv_query() and inventory is None:
-            try:
-                inventory = self._get_inventory(ret.parameters.needs_all_envs(), ret.environment, ret.parameters.get_inv_queries())
-            except InvQueryError as e:
-                e.nodename = nodename
-                raise e
         try:
+            ret = self._node_entity(nodename)
+            ret.initialise_interpolation()
+            if ret.parameters.has_inv_query() and inventory is None:
+                inventory = self._get_inventory(ret.parameters.needs_all_envs(), ret.environment, ret.parameters.get_inv_queries())
             ret.interpolate(nodename, inventory)
-        except ResolveError as e:
+            return ret
+        except (InterpolationError, InvQueryClassNotFound) as e:
             e.nodename = nodename
             raise
-        return ret
 
     def _nodeinfo_as_dict(self, nodename, entity):
         ret = {'__reclass__' : {'node': entity.name, 'name': nodename,
