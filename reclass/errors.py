@@ -23,6 +23,9 @@ class ReclassException(Exception):
     message = property(lambda self: self._get_message())
     rc = property(lambda self: self._rc)
 
+    def __str__(self):
+        return self.message + '\n' + super(ReclassException, self).__str__()
+
     def _get_message(self):
         if self._msg:
             return self._msg
