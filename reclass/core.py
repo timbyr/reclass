@@ -18,9 +18,11 @@ from reclass.errors import MappingFormatError, ClassNotFound
 
 class Core(object):
 
-    def __init__(self, storage, class_mappings, input_data=None):
+    def __init__(self, storage, class_mappings, input_data=None,
+            ignore_class_notfound=False):
         self._storage = storage
         self._class_mappings = class_mappings
+        self._ignore_class_notfound = ignore_class_notfound
         self._input_data = input_data
 
     @staticmethod
@@ -93,6 +95,8 @@ class Core(object):
                 try:
                     class_entity = self._storage.get_class(klass)
                 except ClassNotFound, e:
+                    if self._ignore_class_notfound:
+                        continue
                     e.set_nodename(nodename)
                     raise e
 
