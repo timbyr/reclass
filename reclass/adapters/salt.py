@@ -105,14 +105,16 @@ def cli():
                               inventory_base_uri=options.inventory_base_uri,
                               nodes_uri=options.nodes_uri,
                               classes_uri=options.classes_uri,
-                              class_mappings=class_mappings)
+                              class_mappings=class_mappings,
+                              ignore_class_notfound=options.ignore_class_notfound)
         else:
             data = top(minion_id=None,
                        storage_type=options.storage_type,
                        inventory_base_uri=options.inventory_base_uri,
                        nodes_uri=options.nodes_uri,
                        classes_uri=options.classes_uri,
-                       class_mappings=class_mappings)
+                       class_mappings=class_mappings,
+                       ignore_class_notfound=options.ignore_class_notfound)
 
         print output(data, options.output, options.pretty_print)
 

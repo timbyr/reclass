@@ -16,6 +16,7 @@ OPT_NODES_URI = 'nodes'
 OPT_CLASSES_URI = 'classes'
 OPT_PRETTY_PRINT = True
 OPT_OUTPUT = 'yaml'
+OPT_IGNORE_CLASS_NOTFOUND = False
 
 CONFIG_FILE_SEARCH_PATH = [os.getcwd(),
                            os.path.expanduser('~'),
