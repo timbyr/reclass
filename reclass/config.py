@@ -29,6 +29,9 @@ def make_db_options_group(parser, defaults={}):
     ret.add_option('-c', '--classes-uri', dest='classes_uri',
                    default=defaults.get('classes_uri', OPT_CLASSES_URI),
                    help='the URI to the classes storage [%default]')
+    ret.add_option('-i', '--ignore-class-notfound', dest='ignore_class_notfound',
+                   default=defaults.get('ignore_class_notfound', OPT_IGNORE_CLASS_NOTFOUND),
+                   help='decision for not found classes [%default]')
     return ret
 
 
