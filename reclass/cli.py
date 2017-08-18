@@ -29,7 +29,7 @@ def main():
         storage = get_storage(options.storage_type, options.nodes_uri,
                               options.classes_uri, default_environment='base')
         class_mappings = defaults.get('class_mappings')
-        reclass = Core(storage, class_mappings)
+        reclass = Core(storage, class_mappings, ignore_class_notfound=options.ignore_class_notfound)
 
         if options.mode == MODE_NODEINFO:
             data = reclass.nodeinfo(options.nodename)
