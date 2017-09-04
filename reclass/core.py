@@ -100,7 +100,7 @@ class Core(object):
                 try:
                     class_entity = self._storage.get_class(klass, environment, self._settings)
                 except ClassNotFound as e:
-                    if self._settings.ignore_class_not_found:
+                    if self._settings.ignore_class_notfound:
                         continue
                     e.nodename = nodename
                     e.uri = entity.uri
