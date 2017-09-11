@@ -19,11 +19,16 @@ from reclass.errors import MappingFormatError, ClassNotFound
 class Core(object):
 
     def __init__(self, storage, class_mappings, input_data=None,
-            ignore_class_notfound=False):
+            ignore_class_notfound=False, ignore_class_regexp=['*']):
         self._storage = storage
         self._class_mappings = class_mappings
         self._ignore_class_notfound = ignore_class_notfound
         self._input_data = input_data
+
+        if type(self._ignore_class_regexp) == type(''):
+          self._ignore_class_regexp = [ignore_class_regexp]
+        else:
+          self._ignore_class_regexp = ignore_class_regexp
 
     @staticmethod
     def _get_timestamp():
@@ -90,13 +95,17 @@ class Core(object):
         if merge_base is None:
             merge_base = Entity(name='empty (@{0})'.format(nodename))
 
+        cnf_r = None # class_not_found_regexp compiled
         for klass in entity.classes.as_list():
             if klass not in seen:
                 try:
                     class_entity = self._storage.get_class(klass)
                 except ClassNotFound, e:
                     if self._ignore_class_notfound:
-                        continue
+                        if not cnf_r:
+                            cnf_r = re.compile('||'.join([re.escape(x) for x in self._ignore_class_regexp]))
+                        if cnf_r.match(klass):
+                            continue
                     e.set_nodename(nodename)
                     raise e
 

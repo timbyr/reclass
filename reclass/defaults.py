@@ -17,6 +17,7 @@ OPT_CLASSES_URI = 'classes'
 OPT_PRETTY_PRINT = True
 OPT_OUTPUT = 'yaml'
 OPT_IGNORE_CLASS_NOTFOUND = False
+OPT_IGNORE_CLASS_REGEXP = ['*']
 
 CONFIG_FILE_SEARCH_PATH = [os.getcwd(),
                            os.path.expanduser('~'),
