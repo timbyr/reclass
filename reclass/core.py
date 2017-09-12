@@ -10,7 +10,7 @@
 import time
 #import types
 import re
-#import sys
+import sys
 import fnmatch
 import shlex
 from reclass.datatypes import Entity, Classes, Parameters
@@ -95,7 +95,7 @@ class Core(object):
         if merge_base is None:
             merge_base = Entity(name='empty (@{0})'.format(nodename))
 
-        cnf_r = None # class_not_found_regexp compiled
+        cnf_r = None # class_notfound_regexp compiled
         for klass in entity.classes.as_list():
             if klass not in seen:
                 try:
@@ -103,8 +103,10 @@ class Core(object):
                 except ClassNotFound, e:
                     if self._ignore_class_notfound:
                         if not cnf_r:
-                            cnf_r = re.compile('||'.join([re.escape(x) for x in self._ignore_class_regexp]))
+                            cnf_r = re.compile('|'.join([x for x in self._ignore_class_regexp]))
                         if cnf_r.match(klass):
+                            # TODO, add logging handler
+                            print >>sys.stderr, "[WARNING] Reclass class not found: '%s'. Skipped!" % klass
                             continue
                     e.set_nodename(nodename)
                     raise e
