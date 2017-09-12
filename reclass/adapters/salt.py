@@ -62,7 +62,7 @@ def top(minion_id, storage_type=OPT_STORAGE_TYPE,
                           default_environment='base')
     reclass = Core(storage, class_mappings, input_data=None,
                    ignore_class_notfound=ignore_class_notfound,
-                   ignore_class_regexp=ignore_class_regexp):
+                   ignore_class_regexp=ignore_class_regexp)
 
     # if the minion_id is not None, then return just the applications for the
     # specific minion, otherwise return the entire top data (which we need for
