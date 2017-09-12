@@ -25,7 +25,7 @@ class Core(object):
         self._ignore_class_notfound = ignore_class_notfound
         self._input_data = input_data
 
-        if type(self._ignore_class_regexp) == type(''):
+        if type(ignore_class_regexp) == type(''):
           self._ignore_class_regexp = [ignore_class_regexp]
         else:
           self._ignore_class_regexp = ignore_class_regexp
