@@ -32,6 +32,9 @@ def make_db_options_group(parser, defaults={}):
     ret.add_option('-z', '--ignore-class-notfound', dest='ignore_class_notfound',
                    default=defaults.get('ignore_class_notfound', OPT_IGNORE_CLASS_NOTFOUND),
                    help='decision for not found classes [%default]')
+    ret.add_option('-x', '--ignore-class-regexp', dest='ignore_class_regexp',
+                   default=defaults.get('ignore_class_regexp', OPT_IGNORE_CLASS_REGEXP),
+                   help='decision for not found classes [%default]')
     return ret
 
 

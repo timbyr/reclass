@@ -25,7 +25,8 @@ def ext_pillar(minion_id, pillar,
                classes_uri=OPT_CLASSES_URI,
                class_mappings=None,
                propagate_pillar_data_to_reclass=False,
-               ignore_class_notfound=OPT_IGNORE_CLASS_NOTFOUND):
+               ignore_class_notfound=OPT_IGNORE_CLASS_NOTFOUND,
+               ignore_class_regexp=OPT_IGNORE_CLASS_REGEXP):
 
     nodes_uri, classes_uri = path_mangler(inventory_base_uri,
                                           nodes_uri, classes_uri)
@@ -35,7 +36,8 @@ def ext_pillar(minion_id, pillar,
     if propagate_pillar_data_to_reclass:
         input_data = pillar
     reclass = Core(storage, class_mappings, input_data=input_data,
-                   ignore_class_notfound=ignore_class_notfound)
+                   ignore_class_notfound=ignore_class_notfound,
+                   ignore_class_regexp=ignore_class_regexp)
 
     data = reclass.nodeinfo(minion_id)
     params = data.get('parameters', {})
@@ -50,14 +52,17 @@ def ext_pillar(minion_id, pillar,
 def top(minion_id, storage_type=OPT_STORAGE_TYPE,
         inventory_base_uri=OPT_INVENTORY_BASE_URI, nodes_uri=OPT_NODES_URI,
         classes_uri=OPT_CLASSES_URI,
-        class_mappings=None, ignore_class_notfound=OPT_IGNORE_CLASS_NOTFOUND):
+        class_mappings=None,
+        ignore_class_notfound=OPT_IGNORE_CLASS_NOTFOUND,
+        ignore_class_regexp=OPT_IGNORE_CLASS_REGEXP):
 
     nodes_uri, classes_uri = path_mangler(inventory_base_uri,
                                           nodes_uri, classes_uri)
     storage = get_storage(storage_type, nodes_uri, classes_uri,
                           default_environment='base')
     reclass = Core(storage, class_mappings, input_data=None,
-                   ignore_class_notfound=ignore_class_notfound)
+                   ignore_class_notfound=ignore_class_notfound,
+                   ignore_class_regexp=ignore_class_regexp):
 
     # if the minion_id is not None, then return just the applications for the
     # specific minion, otherwise return the entire top data (which we need for
@@ -106,7 +111,8 @@ def cli():
                               nodes_uri=options.nodes_uri,
                               classes_uri=options.classes_uri,
                               class_mappings=class_mappings,
-                              ignore_class_notfound=options.ignore_class_notfound)
+                              ignore_class_notfound=options.ignore_class_notfound,
+                              ignore_class_regexp=options.ignore_class_regexp)
         else:
             data = top(minion_id=None,
                        storage_type=options.storage_type,
@@ -114,7 +120,8 @@ def cli():
                        nodes_uri=options.nodes_uri,
                        classes_uri=options.classes_uri,
                        class_mappings=class_mappings,
-                       ignore_class_notfound=options.ignore_class_notfound)
+                       ignore_class_notfound=options.ignore_class_notfound,
+                       ignore_class_regexp=options.ignore_class_regexp)
 
         print output(data, options.output, options.pretty_print)
 
