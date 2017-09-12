@@ -28,4 +28,4 @@ Documentation
 =============
 
 Documentation covering the original version is in the doc directory.
-See the README.extensions file for documentation on the extentions.
+See the README-extensions.rst file for documentation on the extentions.
