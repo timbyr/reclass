@@ -25,10 +25,10 @@ class Core(object):
         self._ignore_class_notfound = ignore_class_notfound
         self._input_data = input_data
 
-        if type(ignore_class_regexp) == type(''):
-          self._ignore_class_regexp = [ignore_class_regexp]
+        if isinstance(ignore_class_regexp, basestring):
+            self._ignore_class_regexp = [ignore_class_regexp]
         else:
-          self._ignore_class_regexp = ignore_class_regexp
+            self._ignore_class_regexp = ignore_class_regexp
 
     @staticmethod
     def _get_timestamp():
