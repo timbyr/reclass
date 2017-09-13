@@ -1,27 +1,22 @@
-reclass (extended) README
+Reclass README
 =========================
 
-This is an extended version of **reclass** available at:
-https://github.com/AndrewPickford/reclass
-
-The original **reclass** is available at:
+This is the fork of original **reclass** that is available at:
 https://github.com/madduck/reclass
-
 
 Extentions
 ==========
 
-Escaping of References and Inventory Queries
-Merging Referenced Lists and Dictionaries
-Nested References
-Inventory Queries
+List of the core features:
+
+* Escaping of References and Inventory Queries
+* Merging Referenced Lists and Dictionaries
+* Nested References
+* Inventory Queries
+* Ignore class notfound/regexp option
 
 
-Changes
-=======
-
-The escaping of references changes how the constructs '\${xxx}' and '\\${xxx}'
-are rendered.
+.. include:: ../../README.extensions.rst
 
 
 Documentation
