@@ -177,7 +177,7 @@ $[ if exports:test_key == test_value ], a list of nodes which pass the test is r
 form the test value can either be a simple value or a node parameter. And as well as an equality test
 a not equals test (!=) can also be used.
 
-**Inventory query options**
+**Options**
 
 By default inventory queries only look at nodes in the same environment as the querying node. This can be
 overriden using the +AllEnvs option:
@@ -203,3 +203,46 @@ The logical operators and/or can be used in inventory queries:
 
 The individual elements of the if statement are evaluated and combined with the logical operators starting from the
 left and working to the right.
+
+
+**Examples**
+
+Defining a cluster of machines using an inventory query, for example to open access to a database server to a
+group of nodes. Given exports/parameters for nodes of the form:
+
+# for all nodes requiring access to the database server
+exports:
+  host:
+    ip_address: aaa.bbb.ccc.ddd
+  cluster: _some_cluster_name_
+
+# for the database server
+parameters:
+  cluster_name: production-cluster
+  postgresql:
+    server:
+      clients: $[ exports:host:ip_address if exports:cluster == self:cluster_name ]
+
+This will generate a dictionary with an entry for node where the export:cluster key for a node is equal to the
+parameter:cluster_name key of the node on which the inventory query is run on. Each entry in the generated dictionary
+will contain the value of the exports:host:ip_address key. The output dictionary (depending on node definitions)
+would look like:
+
+node1:
+  ip_address: aaa.bbb.ccc.ddd
+node2:
+  ip_address: www.xxx.yyy.zzz
+
+For nodes where exports:cluster key is not defined or where the key is not equal to self:cluster_name no entry is made
+in the output dictionary.
+
+In practise the exports:cluster key can be set using a parameter reference:
+
+exports:
+  cluster: ${cluster_name}
+
+parameters:
+  cluster_name: production-cluster
+
+The above exports and parameter definitions could be put into a separate class and then included by nodes which require
+access to the database and included by the database server as well.
