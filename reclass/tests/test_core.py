@@ -39,7 +39,18 @@ class TestCore(unittest.TestCase):
             node = reclass.nodeinfo('class_notfound')
 
     def test_ignore_class_notfound(self):
-        reclass = self._core('01', opts={ 'ignore_class_notfound': True })
+        reclass = self._core('01', opts={ 'ignore_class_notfound': True, 'ignore_class_notfound_warning': False })
+        node = reclass.nodeinfo('class_notfound')
+        params = { 'node_test': 'class not found', '_reclass_': { 'environment': 'base', 'name': {'full': 'class_notfound', 'short': 'class_notfound' } } }
+        self.assertEqual(node['parameters'], params)
+
+    def test_raise_class_notfound_with_regexp(self):
+        reclass = self._core('01', opts={ 'ignore_class_notfound': True, 'ignore_class_notfound_warning': False, 'ignore_class_notfound_regexp': 'notmatched.*' })
+        with self.assertRaises(ClassNotFound):
+            node = reclass.nodeinfo('class_notfound')
+
+    def test_ignore_class_notfound_with_regexp(self):
+        reclass = self._core('01', opts={ 'ignore_class_notfound': True, 'ignore_class_notfound_warning': False, 'ignore_class_notfound_regexp': 'miss.*' })
         node = reclass.nodeinfo('class_notfound')
         params = { 'node_test': 'class not found', '_reclass_': { 'environment': 'base', 'name': {'full': 'class_notfound', 'short': 'class_notfound' } } }
         self.assertEqual(node['parameters'], params)

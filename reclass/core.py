@@ -13,6 +13,7 @@ import re
 import fnmatch
 import shlex
 import string
+import sys
 import yaml
 from reclass.settings import Settings
 from reclass.output.yaml_outputter import ExplicitDumper
@@ -26,6 +27,8 @@ class Core(object):
         self._class_mappings = class_mappings
         self._settings = settings
         self._input_data = input_data
+        if self._settings.ignore_class_notfound:
+            self._cnf_r = re.compile('|'.join([x for x in self._settings.ignore_class_notfound_regexp]))
 
     @staticmethod
     def _get_timestamp():
@@ -101,7 +104,11 @@ class Core(object):
                     class_entity = self._storage.get_class(klass, environment, self._settings)
                 except ClassNotFound as e:
                     if self._settings.ignore_class_notfound:
-                        continue
+                        if self._cnf_r.match(klass):
+                            if self._settings.ignore_class_notfound_warning:
+                                # TODO, add logging handler
+                                print >>sys.stderr, "[WARNING] Reclass class not found: '%s'. Skipped!" % klass
+                            continue
                     e.nodename = nodename
                     e.uri = entity.uri
                     raise

@@ -20,6 +20,13 @@ class Settings(object):
         self.reference_sentinels = options.get('reference_sentinels', REFERENCE_SENTINELS)
         self.ignore_class_notfound = options.get('ignore_class_notfound', OPT_IGNORE_CLASS_NOTFOUND)
 
+        self.ignore_class_notfound_regexp = options.get('ignore_class_notfound_regexp', OPT_IGNORE_CLASS_NOTFOUND_REGEXP)
+        if isinstance(self.ignore_class_notfound_regexp, basestring):
+            self.ignore_class_notfound_regexp = [ self.ignore_class_notfound_regexp ]
+
+        self.ignore_class_notfound_warning = options.get('ignore_class_notfound_warning', OPT_IGNORE_CLASS_NOTFOUND_WARNING)
+
+
         self.ref_parser = reclass.values.parser_funcs.get_ref_parser(self.escape_character, self.reference_sentinels, self.export_sentinels)
         self.simple_ref_parser = reclass.values.parser_funcs.get_simple_ref_parser(self.escape_character, self.reference_sentinels, self.export_sentinels)
 
@@ -38,7 +45,9 @@ class Settings(object):
                and self.inventory_ignore_failed_node == other.inventory_ignore_failed_node \
                and self.inventory_ignore_failed_render == other.inventory_ignore_failed_render \
                and self.reference_sentinels == other.reference_sentinels \
-               and self.ignore_class_notfound == other.ignore_class_notfound
+               and self.ignore_class_notfound == other.ignore_class_notfound \
+               and self.ignore_class_notfound_regexp == other.ignore_class_notfound_regexp \
+               and self.ignore_class_notfound_warning == other.ignore_class_notfound_warning
 
     def __copy__(self):
         cls = self.__class__
