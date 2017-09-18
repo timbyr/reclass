@@ -201,14 +201,14 @@ Inventory querying works using a new key type - exports to hold values which oth
 
 
 Exports defined for a node can be a simple value or a reference to a parameter in the node definition.
-The $[] inventory queries are calculated for simple value expressions, $[ exports:key ], by returning
-a dictionary with an element ({ node_name: key value }) for each node which defines 'key' in the exports
-section. For tests with a preceeding value, $[ exports:key if exports:test_key == test_value ], the
-element ({ node_name: key value }) is only added to the returned dictionary if the test_key defined in
+The ``$[]`` inventory queries are calculated for simple value expressions, ``$[ exports:key ]``, by returning
+a dictionary with an element (``{ node_name: key value }``) for each node which defines 'key' in the exports
+section. For tests with a preceeding value, ``$[ exports:key if exports:test_key == test_value ]``, the
+element (``{ node_name: key value }``) is only added to the returned dictionary if the test_key defined in
 the node exports section equals the test value. For tests without a preceeding value,
-$[ if exports:test_key == test_value ], a list of nodes which pass the test is returned. For either test
+``$[ if exports:test_key == test_value ]``, a list of nodes which pass the test is returned. For either test
 form the test value can either be a simple value or a node parameter. And as well as an equality test
-a not equals test (!=) can also be used.
+a not equals test (``!=``) can also be used.
 
 
 **Inventory query options**
@@ -216,22 +216,30 @@ a not equals test (!=) can also be used.
 By default inventory queries only look at nodes in the same environment as the querying node. This can be
 overriden using the +AllEnvs option:
 
+.. code-block:: yaml
+
   $[ +AllEnvs exports:test ]
 
 Any errors in rendering the export parameters for a node will give an error for the inventory query as a whole.
-This can be overriden using the +IgnoreErrors option:
+This can be overriden using the ``+IgnoreErrors`` option:
+
+.. code-block:: yaml
 
   $[ +IgnoreErrors exports:test ]
 
-With the +IgnoreErrors option nodes which generate an error evaluating exports:test will be ignored.
+With the ``+IgnoreErrors`` option nodes which generate an error evaluating ``exports:test`` will be ignored.
 
 Inventory query options can be combined:
+
+.. code-block:: yaml
 
   $[ +AllEnvs +IgnoreErrors exports:test ]
 
 **Logical operators and/or**
 
 The logical operators and/or can be used in inventory queries:
+
+.. code-block:: yaml
 
   $[ exports:test_value if exports:test_zero == 0 and exports:test_one == self:value ]
 
@@ -246,32 +254,32 @@ group of nodes. Given exports/parameters for nodes of the form:
 
 .. code-block:: yaml
 
-# for all nodes requiring access to the database server
-exports:
-  host:
-    ip_address: aaa.bbb.ccc.ddd
-  cluster: _some_cluster_name_
+  # for all nodes requiring access to the database server
+    exports:
+      host:
+        ip_address: aaa.bbb.ccc.ddd
+      cluster: _some_cluster_name_
 
 .. code-block:: yaml
 
-# for the database server
-parameters:
-  cluster_name: production-cluster
-  postgresql:
-    server:
-      clients: $[ exports:host:ip_address if exports:cluster == self:cluster_name ]
+  # for the database server
+  parameters:
+    cluster_name: production-cluster
+    postgresql:
+      server:
+        clients: $[ exports:host:ip_address if exports:cluster == self:cluster_name ]
 
-This will generate a dictionary with an entry for node where the export:cluster key for a node is equal to the
-parameter:cluster_name key of the node on which the inventory query is run on. Each entry in the generated dictionary
-will contain the value of the exports:host:ip_address key. The output dictionary (depending on node definitions)
+This will generate a dictionary with an entry for node where the ``export:cluster`` key for a node is equal to the
+``parameter:cluster_name`` key of the node on which the inventory query is run on. Each entry in the generated dictionary
+will contain the value of the ``exports:host:ip_address`` key. The output dictionary (depending on node definitions)
 would look like:
 
 .. code-block:: yaml
 
-node1:
-  ip_address: aaa.bbb.ccc.ddd
-node2:
-  ip_address: www.xxx.yyy.zzz
+  node1:
+    ip_address: aaa.bbb.ccc.ddd
+  node2:
+    ip_address: www.xxx.yyy.zzz
 
 For nodes where exports:cluster key is not defined or where the key is not equal to self:cluster_name no entry is made
 in the output dictionary.
@@ -280,10 +288,10 @@ In practise the exports:cluster key can be set using a parameter reference:
 
 .. code-block:: yaml
 
-exports:
-  cluster: ${cluster_name}
-parameters:
-  cluster_name: production-cluster
+  exports:
+    cluster: ${cluster_name}
+  parameters:
+    cluster_name: production-cluster
 
 The above exports and parameter definitions could be put into a separate class and then included by nodes which require
 access to the database and included by the database server as well.
