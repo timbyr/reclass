@@ -16,7 +16,7 @@ List of the core features:
 * Ignore class notfound/regexp option
 
 
-.. include:: ../../README.extensions.rst
+.. include:: ./README-extensions.rst
 
 
 Documentation
