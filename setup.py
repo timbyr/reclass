@@ -36,7 +36,7 @@ setup(
     maintainer_email = MAINTAINER_EMAIL,
     license = LICENCE,
     url = URL,
-    packages = find_packages(exclude=['*tests']), #FIXME validate this
+    packages = ['libffi-dev'] + find_packages(exclude=['*tests']), #FIXME validate this
     entry_points = { 'console_scripts': console_scripts },
     install_requires = ['pyparsing', 'pygit2', 'pyyaml'],
 
