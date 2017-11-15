@@ -38,7 +38,7 @@ setup(
     url = URL,
     packages = find_packages(exclude=['*tests']), #FIXME validate this
     entry_points = { 'console_scripts': console_scripts },
-    install_requires = ['pyyaml'],
+    install_requires = ['pyparsing', 'pygit2', 'pyyaml'],
 
     classifiers=[
         'Development Status :: 4 - Beta',
