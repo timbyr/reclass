@@ -123,6 +123,59 @@ The ``${beta:${alpha:two}}`` construct first resolves the ``${alpha:two}`` refer
 the reference ``${beta:a}`` to the value 99.
 
 
+Ignore overwritten missing references
+-------------------------
+
+Given the following classes:
+
+.. code-block:: yaml
+  # node1.yml
+  classes:
+  - class1
+  - class2
+  - class3
+
+  # class1.yml
+  parameters:
+    a: ${x}
+
+  # class2.yml
+  parameters:
+    a: ${y}
+
+  # class3.yml
+  parameters:
+    y: 1
+
+  
+The parameter ``a`` only depends on the parameter ``y`` through the reference set in class2. The fact that the parameter ``x`` referenced
+in class1 is not defined does not affect the final value of the parameter ``a``. For such overwritten missing references by default a warning is
+printed but no error is raised, providing the final value of the parameter being evaluated is a scalar. If the final value is a dictionary or list
+an error will always be raised in the case of a missing reference.
+
+Default value is True to keep backward compatible behavior.
+
+.. code-block:: yaml
+
+  ignore_overwritten_missing_reference: True
+
+
+Print summary of missed references
+----------------------------------
+
+Instead of failing on the first undefinded reference error all missing reference errors are printed at once.
+
+.. code-block:: yaml
+  reclass --nodeinfo mynode
+  -> dontpanic
+     Cannot resolve ${_param:kkk}, at mkkek3:tree:to:fail, in yaml_fs:///test/classes/third.yml
+     Cannot resolve ${_param:kkk}, at mkkek3:tree:another:xxxx, in yaml_fs:///test/classes/third.yml
+     Cannot resolve ${_param:kkk}, at mykey2:tree:to:fail, in yaml_fs:///test/classes/third.yml
+
+.. code-block:: yaml
+
+  group_errors: True
+
 
 Inventory Queries
 -----------------
