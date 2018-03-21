@@ -40,7 +40,7 @@ class Parameters(object):
     functionality and does not try to be a really mapping object.
     '''
 
-    def __init__(self, mapping, settings, uri):
+    def __init__(self, mapping, settings, uri, merge_initialise = True):
         self._settings = settings
         self._base = {}
         self._uri = uri
@@ -51,10 +51,13 @@ class Parameters(object):
         self._needs_all_envs = False
         self._keep_overrides = False
         if mapping is not None:
-            # we initialise by merging
-            self._keep_overrides = True
-            self.merge(mapping)
-            self._keep_overrides = False
+            if merge_initialise:
+                # we initialise by merging
+                self._keep_overrides = True
+                self.merge(mapping)
+                self._keep_overrides = False
+            else:
+                self._base = copy.deepcopy(mapping)
 
     #delimiter = property(lambda self: self._delimiter)
 
@@ -178,7 +181,7 @@ class Parameters(object):
         else:
             return self._update_value(cur, new)
 
-    def merge(self, other):
+    def merge(self, other, wrap=True):
         """Merge function (public edition).
 
         Call _merge_recurse on self with either another Parameter object or a
@@ -194,9 +197,15 @@ class Parameters(object):
 
         self._unrendered = None
         if isinstance(other, dict):
-            wrapped = self._wrap_dict(other, DictPath(self._settings.delimiter))
+            if wrap:
+                wrapped = self._wrap_dict(other, DictPath(self._settings.delimiter))
+            else:
+                wrapped = copy.deepcopy(other)
         elif isinstance(other, self.__class__):
-            wrapped = self._wrap_dict(other._base, DictPath(self._settings.delimiter))
+            if wrap:
+                wrapped = self._wrap_dict(other._base, DictPath(self._settings.delimiter))
+            else:
+                wrapped = copy.deepcopy(other._base)
         else:
             raise TypeError('Cannot merge %s objects into %s' % (type(other),
                             self.__class__.__name__))
