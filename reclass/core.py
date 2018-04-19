@@ -22,7 +22,6 @@ from reclass.settings import Settings
 from reclass.output.yaml_outputter import ExplicitDumper
 from reclass.datatypes import Entity, Classes, Parameters, Exports
 from reclass.errors import MappingFormatError, ClassNotFound, InvQueryClassNotFound, InvQueryError, InterpolationError
-from reclass.values.parser import Parser
 
 try:
     basestring
@@ -98,10 +97,6 @@ class Core(object):
         return Entity(self._settings, parameters=p, name='input data')
 
     def _recurse_entity(self, entity, merge_base=None, seen=None, nodename=None, environment=None):
-
-        # values/parser in order to interpolate references in classes
-        _parser = Parser()
-
         if seen is None:
             seen = {}
 
@@ -112,8 +107,6 @@ class Core(object):
             merge_base = Entity(self._settings, name='empty (@{0})'.format(nodename))
 
         for klass in entity.classes.as_list():
-            if merge_base is not None:
-               klass=str(_parser.parse(klass, self._settings).render(merge_base.parameters.as_dict(), {}))
             if klass not in seen:
                 try:
                     class_entity = self._storage.get_class(klass, environment, self._settings)

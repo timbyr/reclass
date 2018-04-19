@@ -208,55 +208,6 @@ Instead of failing on the first undefinded reference error all missing reference
   group_errors: True
 
 
-Use references in class names
------------------------------
-
-Allows to use references in the class names.
-
-Assuming following setup:
-
-.. code-block:: yaml
-  #/etc/reclass/classes/first.yml
-  parameters:
-    _class:
-      env:
-        override: 'env.dev'
-    lab:
-      name: default
-
-  #/etc/reclass/classes/lab/env/dev.yml
-  parameters:
-    lab:
-      name: dev
-
-  #/etc/reclass/classes/second.yml
-  classes:
-    - first
-    - lab.${_class:env:override}
-
-
-Reclass --nodeinfo then returns:
-
-.. code-block:: yaml
-
-  ...
-  ...
-  applications: []
-  environment: base
-  exports: {}
-  classes:
-  - first
-  - lab.${_class:env:override}
-  - second
-  parameters:
-    _class:
-      env:
-        override: env.dev
-    lab:
-      name: dev
-    ...
-    ...
-
 Inventory Queries
 -----------------
 
