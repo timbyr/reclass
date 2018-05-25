@@ -4,6 +4,8 @@
 # This file is part of reclass
 #
 
+from __future__ import print_function
+
 import copy
 import sys
 
@@ -98,18 +100,18 @@ class ValueList(object):
                 if self._settings.ignore_overwritten_missing_references and not isinstance(output, (dict, list)) and n != (len(self._values)-1):
                     new = None
                     last_error = e
-                    print >>sys.stderr, "[WARNING] Reference '%s' undefined" % (str(value))
+                    print("[WARNING] Reference '%s' undefined" % str(value), file=sys.stderr)
                 else:
                     raise e
 
-            if output is None:
+            if output is None or value.overwrite:
                 output = new
                 deepCopied = False
             else:
                 if isinstance(output, dict) and isinstance(new, dict):
-                    p1 = Parameters(output, self._settings, None, merge_initialise = False)
-                    p2 = Parameters(new, self._settings, None, merge_initialise = False)
-                    p1.merge(p2, wrap=False)
+                    p1 = Parameters(output, self._settings, None, parse_strings=False)
+                    p2 = Parameters(new, self._settings, None, parse_strings=False)
+                    p1.merge(p2)
                     output = p1.as_dict()
                     continue
                 elif isinstance(output, list) and isinstance(new, list):
@@ -122,6 +124,7 @@ class ValueList(object):
                     raise TypeError('Cannot merge %s over %s' % (repr(self._values[n]), repr(self._values[n-1])))
                 else:
                     output = new
+                    deepCopied = False
 
         if isinstance(output, (dict, list)) and last_error is not None:
             raise last_error

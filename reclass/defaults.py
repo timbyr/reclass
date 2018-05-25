@@ -7,7 +7,7 @@
 # Released under the terms of the Artistic Licence 2.0
 #
 import os, sys
-from version import RECLASS_NAME
+from .version import RECLASS_NAME
 
 # defaults for the command-line options
 OPT_STORAGE_TYPE = 'yaml_fs'
@@ -29,7 +29,7 @@ OPT_ALLOW_SCALAR_OVER_DICT = False
 OPT_ALLOW_SCALAR_OVER_LIST = False
 OPT_ALLOW_LIST_OVER_SCALAR = False
 OPT_ALLOW_DICT_OVER_SCALAR = False
-OPT_ALLOW_NONE_OVERRIDE = True
+OPT_ALLOW_NONE_OVERRIDE = False
 
 OPT_INVENTORY_IGNORE_FAILED_NODE = False
 OPT_INVENTORY_IGNORE_FAILED_RENDER = False

@@ -9,6 +9,8 @@
 
 import copy
 
+from six import iteritems
+
 from reclass.settings import Settings
 from reclass.datatypes import Parameters
 from reclass.errors import InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList
@@ -132,7 +134,7 @@ class TestParameters(unittest.TestCase):
         p2, b2 = self._construct_mocked_params(mergee)
         p1.merge(p2)
         p1.initialise_interpolation()
-        for key, value in mergee.iteritems():
+        for (key, value) in iteritems(mergee):
             # check that each key, value in mergee resulted in a get call and
             # a __setitem__ call against b1 (the merge target)
             self.assertIn(mock.call(key), b1.get.call_args_list)
@@ -202,6 +204,15 @@ class TestParametersNoMock(unittest.TestCase):
         p1.initialise_interpolation()
         self.assertEqual(p1.as_dict()['key'], None)
 
+    def test_merge_none_over_list_negative(self):
+        l = ['foo', 1, 2]
+        settings = Settings({'allow_none_override': False})
+        p1 = Parameters(dict(key=l[:2]), settings, '')
+        p2 = Parameters(dict(key=None), settings, '')
+        with self.assertRaises(TypeError):
+            p1.merge(p2)
+            p1.initialise_interpolation()
+
     def test_merge_none_over_dict(self):
         settings = Settings({'allow_none_override': True})
         p1 = Parameters(dict(key=SIMPLE), settings, '')
@@ -209,6 +220,14 @@ class TestParametersNoMock(unittest.TestCase):
         p1.merge(p2)
         p1.initialise_interpolation()
         self.assertEqual(p1.as_dict()['key'], None)
+
+    def test_merge_none_over_dict_negative(self):
+        settings = Settings({'allow_none_override': False})
+        p1 = Parameters(dict(key=SIMPLE), settings, '')
+        p2 = Parameters(dict(key=None), settings, '')
+        with self.assertRaises(TypeError):
+            p1.merge(p2)
+            p1.initialise_interpolation()
 
     # def test_merge_bare_dict_over_dict(self):
         # settings = Settings({'allow_bare_override': True})
@@ -623,6 +642,39 @@ class TestParametersNoMock(unittest.TestCase):
         p1.merge(p2)
         p1.interpolate()
         self.assertEqual(p1.as_dict(), r)
+
+    def test_complex_overwrites_1(self):
+        # find a better name for this test
+        p1 = Parameters({ 'test': { 'dict': { 'a': '${values:one}', 'b': '${values:two}' } },
+                          'values': { 'one': 1, 'two': 2, 'three': { 'x': 'X', 'y': 'Y' } } }, SETTINGS, '')
+        p2 = Parameters({ 'test': { 'dict': { 'c': '${values:two}' } } }, SETTINGS, '')
+        p3 = Parameters({ 'test': { 'dict': { '~b': '${values:three}' } } }, SETTINGS, '')
+        r = {'test': {'dict': {'a': 1, 'b': {'x': 'X', 'y': 'Y'}, 'c': 2}}, 'values': {'one': 1, 'three': {'x': 'X', 'y': 'Y'}, 'two': 2} }
+        p2.merge(p3)
+        p1.merge(p2)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_escaped_string_overwrites(self):
+        p1 = Parameters({ 'test': '\${not_a_ref}' }, SETTINGS, '')
+        p2 = Parameters({ 'test': '\${also_not_a_ref}' }, SETTINGS, '')
+        r = { 'test': '${also_not_a_ref}' }
+        p1.merge(p2)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_escaped_string_in_ref_dict_overwrite(self):
+        p1 = Parameters({'a': { 'one': '\${not_a_ref}' }, 'b': { 'two': '\${also_not_a_ref}' }}, SETTINGS, '')
+        p2 = Parameters({'c': '${a}'}, SETTINGS, '')
+        p3 = Parameters({'c': '${b}'}, SETTINGS, '')
+        p4 = Parameters({'c': { 'one': '\${again_not_a_ref}' } }, SETTINGS, '')
+        r = {'a': {'one': '${not_a_ref}'}, 'b': {'two': '${also_not_a_ref}'}, 'c': {'one': '${again_not_a_ref}', 'two': '${also_not_a_ref}'}}
+        p1.merge(p2)
+        p1.merge(p3)
+        p1.merge(p4)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
 
 if __name__ == '__main__':
     unittest.main()

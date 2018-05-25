@@ -15,12 +15,23 @@ import shlex
 import string
 import sys
 import yaml
+
+from six import iteritems
+
 from reclass.settings import Settings
 from reclass.output.yaml_outputter import ExplicitDumper
 from reclass.datatypes import Entity, Classes, Parameters, Exports
-from reclass.errors import MappingFormatError, ClassNotFound, InvQueryClassNotFound, InvQueryError, InterpolationError
+from reclass.errors import MappingFormatError, ClassNameResolveError, ClassNotFound, InvQueryClassNameResolveError, InvQueryClassNotFound, InvQueryError, InterpolationError, ResolveError
+from reclass.values.parser import Parser
+
+try:
+    basestring
+except NameError:
+    basestring = str
 
 class Core(object):
+
+    _parser = Parser()
 
     def __init__(self, storage, class_mappings, settings, input_data=None):
         self._storage = storage
@@ -54,7 +65,7 @@ class Core(object):
             regexp = True
         try:
             key = lexer.get_token()
-        except ValueError, e:
+        except ValueError as e:
             raise MappingFormatError('Error in mapping "{0}": missing closing '
                                      'quote (or slash)'.format(instr))
         if regexp:
@@ -88,7 +99,7 @@ class Core(object):
         p = Parameters(self._input_data, self._settings)
         return Entity(self._settings, parameters=p, name='input data')
 
-    def _recurse_entity(self, entity, merge_base=None, seen=None, nodename=None, environment=None):
+    def _recurse_entity(self, entity, merge_base=None, context=None, seen=None, nodename=None, environment=None):
         if seen is None:
             seen = {}
 
@@ -98,7 +109,19 @@ class Core(object):
         if merge_base is None:
             merge_base = Entity(self._settings, name='empty (@{0})'.format(nodename))
 
+        if context is None:
+            context = Entity(self._settings, name='empty (@{0})'.format(nodename))
+
         for klass in entity.classes.as_list():
+            if klass.count('$') > 0:
+                try:
+                    klass = str(self._parser.parse(klass, self._settings).render(merge_base.parameters.as_dict(), {}))
+                except ResolveError as e:
+                    try:
+                        klass = str(self._parser.parse(klass, self._settings).render(context.parameters.as_dict(), {}))
+                    except ResolveError as e:
+                        raise ClassNameResolveError(klass, nodename, entity.uri)
+
             if klass not in seen:
                 try:
                     class_entity = self._storage.get_class(klass, environment, self._settings)
@@ -113,7 +136,7 @@ class Core(object):
                     e.uri = entity.uri
                     raise
 
-                descent = self._recurse_entity(class_entity, seen=seen,
+                descent = self._recurse_entity(class_entity, context=merge_base, seen=seen,
                                                nodename=nodename, environment=environment)
                 # on every iteration, we merge the result of the recursive
                 # descent into what we have so far…
@@ -128,7 +151,7 @@ class Core(object):
 
     def _get_automatic_parameters(self, nodename, environment):
         if self._settings.automatic_parameters:
-            return Parameters({ '_reclass_': { 'name': { 'full': nodename, 'short': string.split(nodename, '.')[0] },
+            return Parameters({ '_reclass_': { 'name': { 'full': nodename, 'short': str.split(nodename, '.')[0] },
                                                'environment': environment } }, self._settings, '__auto__')
         else:
             return Parameters({}, self._settings, '')
@@ -151,6 +174,8 @@ class Core(object):
                     node = self._node_entity(nodename)
                 except ClassNotFound as e:
                     raise InvQueryClassNotFound(e)
+                except ClassNameResolveError as e:
+                    raise InvQueryClassNameResolveError(e)
                 if queries is None:
                     try:
                         node.interpolate_exports()
@@ -178,8 +203,8 @@ class Core(object):
         seen = {}
         merge_base = self._recurse_entity(base_entity, seen=seen, nodename=nodename,
                                           environment=node_entity.environment)
-        return self._recurse_entity(node_entity, merge_base, seen=seen, nodename=nodename,
-                                    environment=node_entity.environment)
+        return self._recurse_entity(node_entity, merge_base=merge_base, context=merge_base, seen=seen,
+                                    nodename=nodename, environment=node_entity.environment)
 
     def _nodeinfo(self, nodename, inventory):
         try:
@@ -220,7 +245,7 @@ class Core(object):
         nodes = {}
         applications = {}
         classes = {}
-        for f, nodeinfo in entities.iteritems():
+        for (f, nodeinfo) in iteritems(entities):
             d = nodes[f] = self._nodeinfo_as_dict(f, nodeinfo)
             for a in d['applications']:
                 if a in applications:

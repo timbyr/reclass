@@ -10,11 +10,15 @@
 import copy
 import sys
 import types
+
+from six import iteritems, next
+
 from collections import namedtuple
 from reclass.utils.dictpath import DictPath
 from reclass.values.value import Value
 from reclass.values.valuelist import ValueList
 from reclass.errors import InfiniteRecursionError, ResolveError, ResolveErrorList, InterpolationError, ParseError, BadReferencesError
+
 
 class Parameters(object):
     '''
@@ -40,7 +44,7 @@ class Parameters(object):
     functionality and does not try to be a really mapping object.
     '''
 
-    def __init__(self, mapping, settings, uri, merge_initialise = True):
+    def __init__(self, mapping, settings, uri, parse_strings=True):
         self._settings = settings
         self._base = {}
         self._uri = uri
@@ -50,14 +54,12 @@ class Parameters(object):
         self._resolve_errors = ResolveErrorList()
         self._needs_all_envs = False
         self._keep_overrides = False
+        self._parse_strings = parse_strings
         if mapping is not None:
-            if merge_initialise:
-                # we initialise by merging
-                self._keep_overrides = True
-                self.merge(mapping)
-                self._keep_overrides = False
-            else:
-                self._base = copy.deepcopy(mapping)
+            # we initialise by merging
+            self._keep_overrides = True
+            self.merge(mapping)
+            self._keep_overrides = False
 
     #delimiter = property(lambda self: self._delimiter)
 
@@ -99,7 +101,7 @@ class Parameters(object):
             return value
         else:
             try:
-                return Value(value, self._settings, self._uri)
+                return Value(value, self._settings, self._uri, parse_string=self._parse_strings)
             except InterpolationError as e:
                 e.context = str(path)
                 raise
@@ -108,7 +110,7 @@ class Parameters(object):
         return [ self._wrap_value(v, path.new_subpath(k)) for (k, v) in enumerate(source) ]
 
     def _wrap_dict(self, source, path):
-        return { k: self._wrap_value(v, path.new_subpath(k)) for k, v in source.iteritems() }
+        return { k: self._wrap_value(v, path.new_subpath(k)) for (k, v) in iteritems(source) }
 
     def _update_value(self, cur, new):
         if isinstance(cur, Value):
@@ -123,7 +125,7 @@ class Parameters(object):
         elif isinstance(new, ValueList):
             values.extend(new)
         else:
-            values.append(Value(new, self._settings, self._uri))
+            values.append(Value(new, self._settings, self._uri, parse_string=self._parse_strings))
 
         return values
 
@@ -147,8 +149,11 @@ class Parameters(object):
         """
 
         ret = cur
-        for key, newvalue in new.iteritems():
+        for (key, newvalue) in iteritems(new):
             if key.startswith(self._settings.dict_key_override_prefix) and not self._keep_overrides:
+                if not isinstance(newvalue, Value):
+                    newvalue = Value(newvalue, self._settings, self._uri, parse_string=self._parse_strings)
+                newvalue.overwrite = True
                 ret[key.lstrip(self._settings.dict_key_override_prefix)] = newvalue
             else:
                 ret[key] = self._merge_recurse(ret.get(key), newvalue, path.new_subpath(key))
@@ -173,7 +178,6 @@ class Parameters(object):
 
         """
 
-
         if cur is None:
             return new
         elif isinstance(new, dict) and isinstance(cur, dict):
@@ -181,7 +185,7 @@ class Parameters(object):
         else:
             return self._update_value(cur, new)
 
-    def merge(self, other, wrap=True):
+    def merge(self, other):
         """Merge function (public edition).
 
         Call _merge_recurse on self with either another Parameter object or a
@@ -197,15 +201,9 @@ class Parameters(object):
 
         self._unrendered = None
         if isinstance(other, dict):
-            if wrap:
-                wrapped = self._wrap_dict(other, DictPath(self._settings.delimiter))
-            else:
-                wrapped = copy.deepcopy(other)
+            wrapped = self._wrap_dict(other, DictPath(self._settings.delimiter))
         elif isinstance(other, self.__class__):
-            if wrap:
-                wrapped = self._wrap_dict(other._base, DictPath(self._settings.delimiter))
-            else:
-                wrapped = copy.deepcopy(other._base)
+            wrapped = self._wrap_dict(other._base, DictPath(self._settings.delimiter))
         else:
             raise TypeError('Cannot merge %s objects into %s' % (type(other),
                             self.__class__.__name__))
@@ -243,7 +241,7 @@ class Parameters(object):
                     container[key] = value.render(None, None)
 
     def _render_simple_dict(self, dictionary, path):
-        for key, value in dictionary.iteritems():
+        for (key, value) in iteritems(dictionary):
             self._render_simple_container(dictionary, key, value, path)
 
     def _render_simple_list(self, item_list, path):
@@ -256,7 +254,7 @@ class Parameters(object):
             # we could use a view here, but this is simple enough:
             # _interpolate_inner removes references from the refs hash after
             # processing them, so we cannot just iterate the dict
-            path, v = self._unrendered.iteritems().next()
+            path, v = next(iteritems(self._unrendered))
             self._interpolate_inner(path, inventory)
         if self._resolve_errors.have_errors():
             raise self._resolve_errors

@@ -4,31 +4,43 @@
 # This file is part of reclass
 #
 
-from parser import Parser
-from dictitem import DictItem
-from listitem import ListItem
-from scaitem import ScaItem
+from .parser import Parser
+from .dictitem import DictItem
+from .listitem import ListItem
+from .scaitem import ScaItem
 from reclass.errors import InterpolationError
 
 class Value(object):
 
     _parser = Parser()
 
-    def __init__(self, value, settings, uri):
+    def __init__(self, value, settings, uri, parse_string=True):
         self._settings = settings
         self._uri = uri
+        self._overwrite = False
         if isinstance(value, str):
-            try:
-                self._item = self._parser.parse(value, self._settings)
-            except InterpolationError as e:
-                e.uri = self._uri
-                raise
+            if parse_string:
+                try:
+                    self._item = self._parser.parse(value, self._settings)
+                except InterpolationError as e:
+                    e.uri = self._uri
+                    raise
+            else:
+                self._item = ScaItem(value, self._settings)
         elif isinstance(value, list):
             self._item = ListItem(value, self._settings)
         elif isinstance(value, dict):
             self._item = DictItem(value, self._settings)
         else:
             self._item = ScaItem(value, self._settings)
+
+    @property
+    def overwrite(self):
+        return self._overwrite
+
+    @overwrite.setter
+    def overwrite(self, overwrite):
+        self._overwrite = overwrite
 
     def uri(self):
         return self._uri
