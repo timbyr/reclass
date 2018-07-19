@@ -13,7 +13,9 @@ from __future__ import print_function
 import copy
 import sys
 
-from reclass.errors import ResolveError
+from reclass.errors import ChangedConstantError, ResolveError, TypeMergeError
+
+
 
 class ValueList(object):
 
@@ -25,7 +27,12 @@ class ValueList(object):
         self._inv_refs = []
         self._has_inv_query = False
         self._ignore_failed_render = False
+        self._is_complex = False
         self._update()
+
+    @property
+    def uri(self):
+        return '; '.join([ str(x.uri) for x in self._values ])
 
     def append(self, value):
         self._values.append(value)
@@ -38,9 +45,11 @@ class ValueList(object):
     def _update(self):
         self.assembleRefs()
         self._check_for_inv_query()
-
-    def uri(self):
-        return '; '.join([ x.uri() for x in self._values ])
+        self._is_complex = False
+        item_type = self._values[0].item_type()
+        for v in self._values:
+            if v.is_complex() or v.constant or v.overwrite or v.item_type() != item_type:
+                self._is_complex = True
 
     def has_references(self):
         return len(self._refs) > 0
@@ -52,7 +61,7 @@ class ValueList(object):
         return self._inv_refs
 
     def is_complex(self):
-        return (self.has_references() | self.has_inv_query())
+        return self._is_complex
 
     def get_references(self):
         return self._refs
@@ -100,10 +109,13 @@ class ValueList(object):
         output = None
         deepCopied = False
         last_error = None
+        constant = False
         for n, value in enumerate(self._values):
             try:
                 new = value.render(context, inventory)
             except ResolveError as e:
+                # only ignore failed renders if ignore_overwritten_missing_references is set and we are dealing with a scalar value
+                # and it's not the last item in the values list
                 if self._settings.ignore_overwritten_missing_references and not isinstance(output, (dict, list)) and n != (len(self._values)-1):
                     new = None
                     last_error = e
@@ -111,27 +123,64 @@ class ValueList(object):
                 else:
                     raise e
 
+            if constant:
+                if self._settings.strict_constant_parameters:
+                    raise ChangedConstantError('{0}; {1}'.format(self._values[n-1].uri, self._values[n].uri))
+                else:
+                    continue
+
             if output is None or value.overwrite:
                 output = new
                 deepCopied = False
             else:
-                if isinstance(output, dict) and isinstance(new, dict):
-                    p1 = Parameters(output, self._settings, None, parse_strings=False)
-                    p2 = Parameters(new, self._settings, None, parse_strings=False)
-                    p1.merge(p2)
-                    output = p1.as_dict()
-                    continue
-                elif isinstance(output, list) and isinstance(new, list):
-                    if not deepCopied:
-                        output = copy.deepcopy(output)
-                        deepCopied = True
-                    output.extend(new)
-                    continue
-                elif isinstance(output, (dict, list)) or isinstance(new, (dict, list)):
-                    raise TypeError('Cannot merge %s over %s' % (repr(self._values[n]), repr(self._values[n-1])))
+                if isinstance(output, dict):
+                    if isinstance(new, dict):
+                        p1 = Parameters(output, self._settings, None, parse_strings=False)
+                        p2 = Parameters(new, self._settings, None, parse_strings=False)
+                        p1.merge(p2)
+                        output = p1.as_dict()
+                    elif isinstance(new, list):
+                        raise TypeMergeError(self._values[n], self._values[n-1], self.uri)
+                    elif self._settings.allow_scalar_over_dict or (self._settings.allow_none_override and new is None):
+                        output = new
+                        deepCopied = False
+                    else:
+                        raise TypeMergeError(self._values[n], self._values[n-1], self.uri)
+                elif isinstance(output, list):
+                    if isinstance(new, list):
+                        if not deepCopied:
+                            output = copy.deepcopy(output)
+                            deepCopied = True
+                        output.extend(new)
+                    elif isinstance(new, dict):
+                        raise TypeMergeError(self._values[n], self._values[n-1], self.uri)
+                    elif self._settings.allow_scalar_over_list or (self._settings.allow_none_override and new is None):
+                        output = new
+                        deepCopied = False
+                    else:
+                        raise TypeMergeError(self._values[n], self._values[n-1], self.uri)
                 else:
-                    output = new
-                    deepCopied = False
+                    if isinstance(new, dict):
+                        if self._settings.allow_dict_over_scalar:
+                            output = new
+                            deepCopied = False
+                        else:
+                            raise TypeMergeError(self._values[n], self._values[n-1], self.uri)
+                    elif isinstance(new, list):
+                        if self._settings.allow_list_over_scalar:
+                            output_list = list()
+                            output_list.append(output)
+                            output_list.extend(new)
+                            output = output_list
+                            deepCopied = True
+                        else:
+                            raise TypeMergeError(self._values[n], self._values[n-1], self.uri)
+                    else:
+                        output = new
+                        deepCopied = False
+
+            if value.constant:
+                constant = True
 
         if isinstance(output, (dict, list)) and last_error is not None:
             raise last_error

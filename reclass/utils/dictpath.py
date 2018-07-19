@@ -61,17 +61,17 @@ class DictPath(object):
 
     def __init__(self, delim, contents=None):
         self._delim = delim
+
         if contents is None:
             self._parts = []
+        elif isinstance(contents, list):
+            self._parts = contents
+        elif isinstance(contents, six.string_types):
+            self._parts = self._split_string(contents)
+        elif isinstance(contents, tuple):
+            self._parts = list(contents)
         else:
-            if isinstance(contents, list):
-                self._parts = contents
-            elif isinstance(contents, six.string_types):
-                self._parts = self._split_string(contents)
-            elif isinstance(contents, tuple):
-                self._parts = list(contents)
-            else:
-                raise TypeError('DictPath() takes string or list, '\
+            raise TypeError('DictPath() takes string or list, '\
                                 'not %s' % type(contents))
 
     def __repr__(self):
@@ -147,6 +147,9 @@ class DictPath(object):
 
     def add_subpath(self, key):
         self._parts.append(key)
+
+    def add_ancestor(self, key):
+        self._parts.insert(0, key)
 
     def is_ancestor_of(self, other):
         if len(other._parts) <= len(self._parts):

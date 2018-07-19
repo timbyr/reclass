@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from reclass.utils.parameterdict import ParameterDict
+from reclass.utils.parameterlist import ParameterList
 from reclass.settings import Settings
 from reclass.datatypes import Exports, Parameters
 from reclass.errors import ParseError
@@ -21,8 +23,18 @@ class TestInvQuery(unittest.TestCase):
         e = Exports({'alpha': { 'one': 1, 'two': 2}}, SETTINGS, '')
         d = {'alpha': { 'three': 3, 'four': 4}}
         e.overwrite(d)
-        e.initialise_interpolation()
+        e.interpolate()
         self.assertEqual(e.as_dict(), d)
+
+    def test_interpolate_types(self):
+        e = Exports({'alpha': { 'one': 1, 'two': 2}, 'beta': [ 1, 2 ]}, SETTINGS, '')
+        r = {'alpha': { 'one': 1, 'two': 2}, 'beta': [ 1, 2 ]}
+        self.assertIs(type(e.as_dict()['alpha']), ParameterDict)
+        self.assertIs(type(e.as_dict()['beta']), ParameterList)
+        e.interpolate()
+        self.assertIs(type(e.as_dict()['alpha']), dict)
+        self.assertIs(type(e.as_dict()['beta']), list)
+        self.assertEqual(e.as_dict(), r)
 
     def test_malformed_invquery(self):
         with self.assertRaises(ParseError):
@@ -62,9 +74,10 @@ class TestInvQuery(unittest.TestCase):
     def test_list_if_expr_invquery(self):
         e = {'node1': {'a': 1, 'b': 2}, 'node2': {'a': 3, 'b': 3}, 'node3': {'a': 3, 'b': 2}}
         p = Parameters({'exp': '$[ if exports:b == 2 ]'}, SETTINGS, '')
-        r = {'exp': ['node1', 'node3']}
+        r1 = {'exp': ['node1', 'node3']}
+        r2 = {'exp': ['node3', 'node1']}
         p.interpolate(e)
-        self.assertEqual(p.as_dict(), r)
+        self.assertIn(p.as_dict(), [ r1, r2 ])
 
     def test_if_expr_invquery_wth_and(self):
         e = {'node1': {'a': 1, 'b': 4, 'c': False}, 'node2': {'a': 3, 'b': 4, 'c': True}}
@@ -97,9 +110,10 @@ class TestInvQuery(unittest.TestCase):
     def test_list_if_expr_invquery_with_and(self):
         e = {'node1': {'a': 1, 'b': 2}, 'node2': {'a': 3, 'b': 3}, 'node3': {'a': 3, 'b': 4}}
         p = Parameters({'exp': '$[ if exports:b == 2 or exports:b == 4 ]'}, SETTINGS, '')
-        r = {'exp': ['node1', 'node3']}
+        r1 = {'exp': ['node1', 'node3']}
+        r2 = {'exp': ['node3', 'node1']}
         p.interpolate(e)
-        self.assertEqual(p.as_dict(), r)
+        self.assertIn(p.as_dict(), [ r1, r2 ])
 
 if __name__ == '__main__':
     unittest.main()

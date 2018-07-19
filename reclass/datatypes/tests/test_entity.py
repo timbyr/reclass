@@ -167,6 +167,19 @@ class TestEntity(unittest.TestCase):
 
 class TestEntityNoMock(unittest.TestCase):
 
+    def test_interpolate_list_types(self):
+        node1_exports = Exports({'exps': [ '${one}' ] }, SETTINGS, 'first')
+        node1_parameters = Parameters({'alpha': [ '${two}', '${three}' ], 'one': 1, 'two': 2, 'three': 3 }, SETTINGS, 'first')
+        node1_entity = Entity(SETTINGS, classes=None, applications=None, parameters=node1_parameters, exports=node1_exports)
+        node2_exports = Exports({'exps': '${alpha}' }, SETTINGS, 'second')
+        node2_parameters = Parameters({}, SETTINGS, 'second')
+        node2_entity = Entity(SETTINGS, classes=None, applications=None, parameters=node2_parameters, exports=node2_exports)
+        r = {'exps': [ 1, 2, 3 ]}
+        node1_entity.merge(node2_entity)
+        node1_entity.interpolate(None)
+        self.assertIs(type(node1_entity.exports.as_dict()['exps']), list)
+        self.assertDictEqual(node1_entity.exports.as_dict(), r)
+
     def test_exports_with_refs(self):
         inventory = {'node1': {'a': 1, 'b': 2}, 'node2': {'a': 3, 'b': 4}}
         node3_exports = Exports({'a': '${a}', 'b': '${b}'}, SETTINGS, '')
@@ -253,10 +266,11 @@ class TestEntityNoMock(unittest.TestCase):
         node1_entity.initialise_interpolation()
         node2_entity.initialise_interpolation()
         queries = node1_entity.parameters.get_inv_queries()
-        with self.assertRaises(ResolveError):
+        with self.assertRaises(ResolveError) as e:
             for p, q in queries:
                 node1_entity.interpolate_single_export(q)
                 node2_entity.interpolate_single_export(q)
+        self.assertEqual(e.exception.message, "-> \n   Cannot resolve ${b}, at a")
 
     def test_exports_failed_render_ignore(self):
         node1_exports = Exports({'a': '${a}'}, SETTINGS, '')

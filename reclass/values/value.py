@@ -24,6 +24,7 @@ class Value(object):
         self._settings = settings
         self._uri = uri
         self._overwrite = False
+        self._constant = False
         if isinstance(value, string_types):
             if parse_string:
                 try:
@@ -48,8 +49,23 @@ class Value(object):
     def overwrite(self, overwrite):
         self._overwrite = overwrite
 
+    @property
+    def constant(self):
+        return self._constant
+
+    @constant.setter
+    def constant(self, constant):
+        self._constant = constant
+
+    @property
     def uri(self):
         return self._uri
+
+    def item_type(self):
+        return self._item.type
+
+    def item_type_str(self):
+        return self._item.type_str()
 
     def is_container(self):
         return self._item.is_container()
