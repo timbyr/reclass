@@ -24,6 +24,7 @@ class Value(object):
         self._settings = settings
         self._uri = uri
         self._overwrite = False
+        self._constant = False
         if isinstance(value, string_types):
             if parse_string:
                 try:
@@ -47,6 +48,14 @@ class Value(object):
     @overwrite.setter
     def overwrite(self, overwrite):
         self._overwrite = overwrite
+
+    @property
+    def constant(self):
+        return self._constant
+
+    @constant.setter
+    def constant(self, constant):
+        self._constant = constant
 
     @property
     def uri(self):
