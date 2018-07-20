@@ -81,11 +81,12 @@ class DictPath(object):
         return self._delim.join(str(i) for i in self._parts)
 
     def __eq__(self, other):
+        if not (isinstance(other, six.string_types) or
+                isinstance(other, self.__class__)):
+            return False
         if isinstance(other, six.string_types):
             other = DictPath(self._delim, other)
-
-        return self._parts == other._parts \
-                and self._delim == other._delim
+        return self._parts == other._parts and self._delim == other._delim
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -93,9 +94,9 @@ class DictPath(object):
     def __hash__(self):
         return hash(str(self))
 
-    def _get_path(self):
+    @property
+    def path(self):
         return self._parts
-    path = property(_get_path)
 
     def _get_key(self):
         if len(self._parts) == 0:
@@ -114,17 +115,8 @@ class DictPath(object):
     def _split_string(self, string):
         return re.split(r'(?<!\\)' + re.escape(self._delim), string)
 
-    def _escape_string(self, string):
-        return string.replace(self._delim, '\\' + self._delim)
-
-    def has_ancestors(self):
-        return len(self._parts) > 1
-
     def key_parts(self):
-        if self.has_ancestors():
-            return self._parts[:-1]
-        else:
-            return []
+        return self._parts[:-1]
 
     def new_subpath(self, key):
         return DictPath(self._delim, self._parts + [key])
@@ -161,18 +153,17 @@ class DictPath(object):
 
     def exists_in(self, container):
         item = container
-        for i in self._parts:
+        for part in self._parts:
             if isinstance(item, (dict, list)):
-                if i in item:
+                if part in item:
                     if isinstance(item, dict):
-                        item = item[i]
+                        item = item[part]
                     elif isinstance(container, list):
-                        item = item[int(i)]
+                        item = item[int(part)]
                 else:
                     return False
             else:
                 if item == self._parts[-1]:
                     return True
-                else:
-                    return False
+                return False
         return True
