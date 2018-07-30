@@ -31,11 +31,12 @@ def ext_pillar(minion_id, pillar,
                classes_uri=OPT_CLASSES_URI,
                class_mappings=None,
                propagate_pillar_data_to_reclass=False,
+               compose_node_name=OPT_COMPOSE_NODE_NAME,
                **kwargs):
 
     path_mangler = get_path_mangler(storage_type)
     nodes_uri, classes_uri = path_mangler(inventory_base_uri, nodes_uri, classes_uri)
-    storage = get_storage(storage_type, nodes_uri, classes_uri)
+    storage = get_storage(storage_type, nodes_uri, classes_uri, compose_node_name)
     input_data = None
     if propagate_pillar_data_to_reclass:
         input_data = pillar
@@ -54,11 +55,12 @@ def ext_pillar(minion_id, pillar,
 
 def top(minion_id, storage_type=OPT_STORAGE_TYPE,
         inventory_base_uri=OPT_INVENTORY_BASE_URI, nodes_uri=OPT_NODES_URI,
-        classes_uri=OPT_CLASSES_URI, class_mappings=None, **kwargs):
+        classes_uri=OPT_CLASSES_URI, class_mappings=None, compose_node_name=OPT_COMPOSE_NODE_NAME,
+        **kwargs):
 
     path_mangler = get_path_mangler(storage_type)
     nodes_uri, classes_uri = path_mangler(inventory_base_uri, nodes_uri, classes_uri)
-    storage = get_storage(storage_type, nodes_uri, classes_uri)
+    storage = get_storage(storage_type, nodes_uri, classes_uri, compose_node_name)
     settings = Settings(kwargs)
     reclass = Core(storage, class_mappings, settings, input_data=None)
 
