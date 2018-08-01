@@ -12,11 +12,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-#try:
-#    from types import StringTypes
-#except ImportError:
-#    StringTypes = (str, )
-
 import copy
 import sys
 import types
@@ -29,7 +24,9 @@ from reclass.utils.parameterdict import ParameterDict
 from reclass.utils.parameterlist import ParameterList
 from reclass.values.value import Value
 from reclass.values.valuelist import ValueList
-from reclass.errors import InfiniteRecursionError, ResolveError, ResolveErrorList, InterpolationError, BadReferencesError
+from reclass.errors import InfiniteRecursionError, ResolveError
+from reclass.errors import ResolveErrorList, InterpolationError, ParseError
+from reclass.errors import BadReferencesError
 
 
 class Parameters(object):
@@ -61,10 +58,9 @@ class Parameters(object):
         self._uri = uri
         self._base = ParameterDict(uri=self._uri)
         self._unrendered = None
-        self._escapes_handled = {}
         self._inv_queries = []
-        self._resolve_errors = ResolveErrorList()
-        self._needs_all_envs = False
+        self.resolve_errors = ResolveErrorList()
+        self.needs_all_envs = False
         self._parse_strings = parse_strings
         if mapping is not None:
             # initialise by merging
@@ -84,17 +80,12 @@ class Parameters(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    @property
     def has_inv_query(self):
         return len(self._inv_queries) > 0
 
     def get_inv_queries(self):
         return self._inv_queries
-
-    def needs_all_envs(self):
-        return self._needs_all_envs
-
-    def resolve_errors(self):
-        return self._resolve_errors
 
     def as_dict(self):
         return self._base.copy()
@@ -108,7 +99,8 @@ class Parameters(object):
             return self._wrap_list(value)
         else:
             try:
-                return Value(value, self._settings, self._uri, parse_string=self._parse_strings)
+                return Value(value, self._settings, self._uri,
+                             parse_string=self._parse_strings)
             except InterpolationError as e:
                 e.context = DictPath(self._settings.delimiter)
                 raise
@@ -154,7 +146,8 @@ class Parameters(object):
                 uri = new.uri
             else:
                 uri = self._uri
-            values.append(Value(new, self._settings, uri, parse_string=self._parse_strings))
+            values.append(Value(new, self._settings, uri,
+                                parse_string=self._parse_strings))
 
         return values
 
@@ -177,6 +170,8 @@ class Parameters(object):
         """
 
         for (key, value) in iteritems(new):
+            # check key for "control" preffixes (~,=,...)
+            key = str(key)
             if key[0] in self._settings.dict_key_prefixes:
                 newkey = key[1:]
                 if not isinstance(value, Value):
@@ -246,37 +241,37 @@ class Parameters(object):
         self._base = self._merge_recurse(self._base, wrapped)
 
     def _render_simple_container(self, container, key, value, path):
-            if isinstance(value, ValueList):
-                if value.is_complex():
-                    p = path.new_subpath(key)
-                    self._unrendered[p] = True
-                    container[key] = value
-                    if value.has_inv_query():
-                        self._inv_queries.append((p, value))
-                        if value.needs_all_envs():
-                            self._needs_all_envs = True
-                    return
-                else:
-                    value = value.merge()
-            if isinstance(value, Value) and value.is_container():
-                value = value.contents()
-            if isinstance(value, dict):
-                container[key] = self._render_simple_dict(value, path.new_subpath(key))
-            elif isinstance(value, list):
-                container[key] = self._render_simple_list(value, path.new_subpath(key))
-            elif isinstance(value, Value):
-                if value.is_complex():
-                    p = path.new_subpath(key)
-                    self._unrendered[p] = True
-                    container[key] = value
-                    if value.has_inv_query():
-                        self._inv_queries.append((p, value))
-                        if value.needs_all_envs():
-                            self._needs_all_envs = True
-                else:
-                    container[key] = value.render(None, None)
-            else:
+        if isinstance(value, ValueList):
+            if value.is_complex:
+                p = path.new_subpath(key)
+                self._unrendered[p] = True
                 container[key] = value
+                if value.has_inv_query:
+                    self._inv_queries.append((p, value))
+                    if value.needs_all_envs:
+                        self.needs_all_envs = True
+                return
+            else:
+                value = value.merge()
+        if isinstance(value, Value) and value.is_container():
+            value = value.contents
+        if isinstance(value, dict):
+            container[key] = self._render_simple_dict(value, path.new_subpath(key))
+        elif isinstance(value, list):
+            container[key] = self._render_simple_list(value, path.new_subpath(key))
+        elif isinstance(value, Value):
+            if value.is_complex:
+                p = path.new_subpath(key)
+                self._unrendered[p] = True
+                container[key] = value
+                if value.has_inv_query:
+                    self._inv_queries.append((p, value))
+                    if value.needs_all_envs:
+                        self.needs_all_envs = True
+            else:
+                container[key] = value.render(None, None)
+        else:
+            container[key] = value
 
     def _render_simple_dict(self, dictionary, path):
         new_dict = {}
@@ -298,8 +293,8 @@ class Parameters(object):
             # processing them, so we cannot just iterate the dict
             path, v = next(iteritems(self._unrendered))
             self._interpolate_inner(path, inventory)
-        if self._resolve_errors.have_errors():
-            raise self._resolve_errors
+        if self.resolve_errors.have_errors():
+            raise self.resolve_errors
 
     def initialise_interpolation(self):
         self._unrendered = None
@@ -309,9 +304,10 @@ class Parameters(object):
         if self._unrendered is None:
             self._unrendered = {}
             self._inv_queries = []
-            self._needs_all_envs = False
-            self._resolve_errors = ResolveErrorList()
-            self._base = self._render_simple_dict(self._base, DictPath(self._settings.delimiter))
+            self.needs_all_envs = False
+            self.resolve_errors = ResolveErrorList()
+            self._base = self._render_simple_dict(self._base,
+                 DictPath(self._settings.delimiter))
 
     def _interpolate_inner(self, path, inventory):
         value = path.get_value(self._base)
@@ -333,7 +329,7 @@ class Parameters(object):
         except ResolveError as e:
             e.context = path
             if self._settings.group_errors:
-                self._resolve_errors.add(e)
+                self.resolve_errors.add(e)
                 new = None
             else:
                 raise
@@ -370,7 +366,7 @@ class Parameters(object):
                         ancestor = ancestor.new_subpath(k)
                         if ancestor in self._unrendered:
                             self._interpolate_inner(ancestor, inventory)
-            if value.allRefs():
+            if value.allRefs:
                 all_refs = True
             else:
                 # not all references in the value could be calculated previously so
