@@ -19,8 +19,10 @@ List of the core features:
 Documentation
 =============
 
+.. _README-extensions: README-extensions.rst
+
 Documentation covering the original version is in the doc directory.
-See the `README-extensions.rst`_ file for documentation on the extentions.
+See the `README-extensions`_ file for documentation on the extentions.
 
 
 .. include:: ./README-extensions.rst
