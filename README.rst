@@ -16,15 +16,14 @@ List of the core features:
 * Ignore class notfound/regexp option
 
 
-.. include:: ./README-extensions.rst
-
-
 Documentation
 =============
 
 Documentation covering the original version is in the doc directory.
-See the [README-extensions.rst] file for documentation on the extentions.
+See the [README-extensions.rst](README-extensions.rst) file for documentation on the extentions.
 
+
+.. include:: ./README-extensions.rst
 
 
 Reclass related projects/tools
