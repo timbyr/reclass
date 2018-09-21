@@ -123,10 +123,6 @@ class Core(object):
                     except ResolveError as e:
                         raise ClassNameResolveError(klass, nodename, entity.uri)
 
-            # for convenience, first level classes_uri/class.yml can have un-interpolated "."
-            if klass.startswith('.'):
-                klass = klass[1:]
-
             if klass not in seen:
                 try:
                     class_entity = self._storage.get_class(klass, environment, self._settings)

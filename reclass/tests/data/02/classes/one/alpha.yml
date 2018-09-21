@@ -1,0 +1,7 @@
+classes:
+- .beta
+- two.beta
+
+parameters:
+  test1: ${one_beta}
+  test2: ${two_beta}

@@ -59,6 +59,18 @@ class TestCore(unittest.TestCase):
         params = { 'node_test': 'class not found', '_reclass_': { 'environment': 'base', 'name': {'full': 'class_notfound', 'short': 'class_notfound' } } }
         self.assertEqual(node['parameters'], params)
 
+    def test_relative_class_names(self):
+        reclass = self._core('02')
+        node = reclass.nodeinfo('relative')
+        params = { 'test1': 1, 'test2': 2, 'one_beta': 1, 'two_beta': 2, '_reclass_': { 'environment': 'base', 'name': { 'full': 'relative', 'short': 'relative' } } }
+        self.assertEqual(node['parameters'], params)
+
+    def test_top_relative_class_names(self):
+        reclass = self._core('02')
+        node = reclass.nodeinfo('top_relative')
+        params = { 'test1': 1, 'test2': 2, 'one_beta': 1, 'two_beta': 2, '_reclass_': { 'environment': 'base', 'name': { 'full': 'top_relative', 'short': 'top_relative' } } }
+        self.assertEqual(node['parameters'], params)
+
 
 if __name__ == '__main__':
     unittest.main()
