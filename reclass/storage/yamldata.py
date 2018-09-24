@@ -53,16 +53,26 @@ class YamlData(object):
     def get_data(self):
         return self._data
 
-    def get_entity(self, name, settings, parent_class=None):
+    def set_absolute_names(self, name, names):
+        parent = '.'.join(name.split('.')[0:-1])
+        new_names = []
+        for n in names:
+            if n[0] == '.':
+                if parent == '':
+                    n = n[1:]
+                else:
+                    n = parent + n
+            new_names.append(n)
+        return new_names
+
+    def get_entity(self, name, settings):
         #if name is None:
         #    name = self._uri
 
         classes = self._data.get('classes')
         if classes is None:
             classes = []
-        if parent_class:
-            classes = \
-                [parent_class + c for c in classes if c.startswith('.')]
+        classes = self.set_absolute_names(name, classes)
         classes = datatypes.Classes(classes)
 
         applications = self._data.get('applications')

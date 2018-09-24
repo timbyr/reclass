@@ -96,7 +96,6 @@ class ExternalNodeStorage(ExternalNodeStorageBase):
         try:
             relpath = self._nodes[name]
             path = os.path.join(self.nodes_uri, relpath)
-            name = os.path.splitext(relpath)[0]
         except KeyError as e:
             raise reclass.errors.NodeNotFound(self.name, name, self.nodes_uri)
         entity = YamlData.from_file(path).get_entity(name, settings)
@@ -108,13 +107,7 @@ class ExternalNodeStorage(ExternalNodeStorageBase):
             path = os.path.join(self.classes_uri, self._classes[name])
         except KeyError as e:
             raise reclass.errors.ClassNotFound(self.name, name, self.classes_uri)
-
-        if path.endswith('init{}'.format(FILE_EXTENSION)):
-            parent_class=name
-        else:
-            # for regular class yml file, strip its name
-            parent_class='.'.join(name.split('.')[:-1])
-        entity = YamlData.from_file(path).get_entity(name, settings, parent_class)
+        entity = YamlData.from_file(path).get_entity(name, settings)
         return entity
 
     def enumerate_nodes(self):
