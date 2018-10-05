@@ -54,12 +54,23 @@ class YamlData(object):
         return self._data
 
     def set_absolute_names(self, name, names):
-        parent = '.'.join(name.split('.')[0:-1])
+        structure = name.split('.')
+        parent = '.'.join(structure[0:-1])
         new_names = []
         for n in names:
             if n[0] == '.':
-                if parent == '':
+                if len(n) > 1 and n[1] == '.':
+                    grandparent = '.'.join(structure[0:-2])
+                    if len(n) == 2:
+                        n = grandparent
+                    elif parent == '' or grandparent == '':
+                        n = n[2:]
+                    else:
+                        n = grandparent + n[1:]
+                elif parent == '':
                     n = n[1:]
+                elif len(n) == 1:
+                    n = parent
                 else:
                     n = parent + n
             new_names.append(n)

@@ -1,2 +1,5 @@
 classes:
 - .one.alpha
+
+parameters:
+  three_alpha: 3
