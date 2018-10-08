@@ -2,7 +2,7 @@ classes:
 - .beta
 - two.beta
 - ..four
-- ..two.delta
+- ..two.gamma
 
 parameters:
   test1: ${one_beta}

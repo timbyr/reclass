@@ -340,7 +340,7 @@ Load classes with relative names
 --------------------------------
 
 Load referenced class from a relative location to the current class.
-To load class from relative location start the class uri with "." char.
+To load class from relative location start the class uri with "." or ".." char.
 The only supported reference is to nested tree structure below the current class.
 
 You are allowed to use syntax for relative uri to required class on any place on your model (first class loaded, init.yml, regular class .yml).
@@ -350,7 +350,7 @@ The feature is expected to improve flexibility while sharing classes between you
 It's a new feature use it with care and mind that using "relative syntax" lower traceability of
 your pillar composition.
 
-Example usage of relative class name:
+Example usage of relative class name using '.' and '..':
 
 .. code-block:: yaml
 
@@ -365,6 +365,12 @@ Example usage of relative class name:
   #/etc/reclass/classes/component/init.yml
   classes:
     - .defaults
+
+.. code-block:: yaml
+
+  #/etc/reclass/classes/component/configuration/init.yml
+  classes:
+    - ..defaults
 
 
 Inventory Queries

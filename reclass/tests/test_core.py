@@ -62,13 +62,15 @@ class TestCore(unittest.TestCase):
     def test_relative_class_names(self):
         reclass = self._core('02')
         node = reclass.nodeinfo('relative')
-        params = { 'test1': 1, 'test2': 2, 'one_beta': 1, 'two_beta': 2, '_reclass_': { 'environment': 'base', 'name': { 'full': 'relative', 'short': 'relative' } } }
+        params = { 'test1': 1, 'test2': 2, 'test3': 3, 'test4': 4, 'one_beta': 1, 'two_beta': 2, 'four_alpha': 3, 'two_gamma': 4, '_reclass_': { 'environment': 'base', 'name': { 'full': 'relative', 'short': 'relative' } } }
+        self.maxDiff = None
         self.assertEqual(node['parameters'], params)
 
     def test_top_relative_class_names(self):
         reclass = self._core('02')
         node = reclass.nodeinfo('top_relative')
-        params = { 'test1': 1, 'test2': 2, 'test3': 3, 'test4': 4, 'one_beta': 1, 'two_beta': 2, 'four_aplha': 3, 'two_gamma': 4, '_reclass_': { 'environment': 'base', 'name': { 'full': 'top_relative', 'short': 'top_relative' } } }
+        params = { 'test1': 1, 'test2': 2, 'test3': 3, 'test4': 4, 'one_beta': 1, 'two_beta': 2, 'four_alpha': 3, 'two_gamma': 4, '_reclass_': { 'environment': 'base', 'name': { 'full': 'top_relative', 'short': 'top_relative' } } }
+        self.maxDiff = None
         self.assertEqual(node['parameters'], params)
 
     def test_compose_node_names(self):
