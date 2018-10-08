@@ -1,11 +1,11 @@
 classes:
 - .beta
 - two.beta
-- ..three
+- ..four
 - ..two.delta
 
 parameters:
   test1: ${one_beta}
   test2: ${two_beta}
-  test3: ${three_alpha}
+  test3: ${four_alpha}
   test4: ${two_gamma}
