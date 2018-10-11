@@ -347,6 +347,8 @@ You are allowed to use syntax for relative uri to required class on any place on
 
 The feature is expected to improve flexibility while sharing classes between your models.
 
+Please mpte that you can't use '..' without any calss following. If you want simply up in the sctructure, type in '..init'.
+
 It's a new feature use it with care and mind that using "relative syntax" lower traceability of
 your pillar composition.
 

@@ -58,23 +58,31 @@ class YamlData(object):
         parent = '.'.join(structure[0:-1])
         new_names = []
         for n in names:
-            if n[0] == '.':
-                if len(n) > 1 and n[1] == '.':
-                    grandparent = '.'.join(structure[0:-2])
-                    if len(n) == 2:
-                        n = grandparent
-                    elif parent == '' or grandparent == '':
-                        n = n[2:]
-                    else:
-                        n = grandparent + n[1:]
-                elif parent == '':
-                    n = n[1:]
-                elif len(n) == 1:
-                    n = parent
-                else:
-                    n = parent + n
+            if n[0] == '.' and len(n) > 1 and n[1] == '.':
+                grandparent = '.'.join(structure[0:-2])
+                n = self.get_grandparent_directory(n, parent, grandparent)
+            else:
+                n = self.get_parent_directory(n, parent)
             new_names.append(n)
         return new_names
+
+    def get_parent_directory(self, name, parent):
+        if parent == '':
+            name = name[1:]
+        elif len(name) == 1:
+            name = parent
+        else:
+            name = parent + name
+        return name
+
+    def get_grandparent_directory(self, name, parent, grandparent):
+        if len(name) == 2:
+            name = grandparent
+        elif parent == '' or grandparent == '':
+            name = name[2:]
+        else:
+            name = grandparent + name[1:]
+        return name
 
     def get_entity(self, name, settings):
         #if name is None:
