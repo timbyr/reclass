@@ -54,35 +54,31 @@ class YamlData(object):
         return self._data
 
     def set_absolute_names(self, name, names):
-        structure = name.split('.')
-        parent = '.'.join(structure[0:-1])
         new_names = []
         for n in names:
-            if n[0] == '.' and len(n) > 1 and n[1] == '.':
-                grandparent = '.'.join(structure[0:-2])
-                n = self.get_grandparent_directory(n, parent, grandparent)
-            else:
-                n = self.get_parent_directory(n, parent)
+            if n[0] == '.':
+                dots = self.count_dots(n)
+                levels_up = (dots * (-1))
+                parent = '.'.join(name.split('.')[0:levels_up])
+                if parent == '':
+                    n = n[dots:]
+                else:
+                    n = parent + n[dots - 1:]
             new_names.append(n)
         return new_names
 
-    def get_parent_directory(self, name, parent):
-        if parent == '':
-            name = name[1:]
-        elif len(name) == 1:
-            name = parent
-        else:
-            name = parent + name
-        return name
+    def yield_dots(self, value):
+        try:
+            idx = value.index('.')
+        except ValueError:
+            return
+        if idx == 0:
+            yield '.'
+            for dot in self.yield_dots(value[1:]):
+                yield dot
 
-    def get_grandparent_directory(self, name, parent, grandparent):
-        if len(name) == 2:
-            name = grandparent
-        elif parent == '' or grandparent == '':
-            name = name[2:]
-        else:
-            name = grandparent + name[1:]
-        return name
+    def count_dots(self, value):
+        return len(list(self.yield_dots(value)))
 
     def get_entity(self, name, settings):
         #if name is None:
