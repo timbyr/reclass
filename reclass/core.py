@@ -114,7 +114,9 @@ class Core(object):
 
         for klass in entity.classes.as_list():
             # class name contain reference
-            if klass.count('$') > 0:
+            num_references = klass.count(self._settings.reference_sentinels[0]) +\
+                             klass.count(self._settings.export_sentinels[0])
+            if num_references > 0:
                 try:
                     klass = str(self._parser.parse(klass, self._settings).render(merge_base.parameters.as_dict(), {}))
                 except ResolveError as e:

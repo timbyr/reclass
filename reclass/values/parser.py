@@ -29,14 +29,12 @@ class Parser(object):
                 raise ParseError(e.msg, e.line, e.col, e.lineno)
 
         self._settings = settings
-        parser_settings = (settings.escape_character,
-                           settings.reference_sentinels,
-                           settings.export_sentinels)
-        ref_parser = parsers.get_ref_parser(*parser_settings)
-        simple_ref_parser = parsers.get_simple_ref_parser(*parser_settings)
+        ref_parser = parsers.get_ref_parser(settings)
+        simple_ref_parser = parsers.get_simple_ref_parser(settings)
 
         sentinel_count = (value.count(settings.reference_sentinels[0]) +
                           value.count(settings.export_sentinels[0]))
+
         if sentinel_count == 0:
             # speed up: only use pyparsing if there are sentinels in the value
             return ScaItem(value, self._settings)
@@ -68,5 +66,4 @@ class Parser(object):
         items = [ ScaItem(v, self._settings) for t, v in tokens ]
         if len(items) == 1:
             return InvItem(items[0], self._settings)
-        else:
-            return InvItem(CompItem(items), self._settings)
+        return InvItem(CompItem(items), self._settings)
