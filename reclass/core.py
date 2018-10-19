@@ -39,7 +39,8 @@ class Core(object):
         self._settings = settings
         self._input_data = input_data
         if self._settings.ignore_class_notfound:
-            self._cnf_r = re.compile('|'.join([x for x in self._settings.ignore_class_notfound_regexp]))
+            self._cnf_r = re.compile(
+                '|'.join(self._settings.ignore_class_notfound_regexp))
 
     @staticmethod
     def _get_timestamp():
