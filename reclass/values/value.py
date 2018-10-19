@@ -24,7 +24,7 @@ class Value(object):
         self._settings = settings
         self.uri = uri
         self.overwrite = False
-        self._constant = False
+        self.constant = False
         if isinstance(value, string_types):
             if parse_string:
                 try:
@@ -40,14 +40,6 @@ class Value(object):
             self._item = DictItem(value, self._settings)
         else:
             self._item = ScaItem(value, self._settings)
-
-    @property
-    def constant(self):
-        return self._constant
-
-    @constant.setter
-    def constant(self, constant):
-        self._constant = constant
 
     def item_type(self):
         return self._item.type
@@ -74,8 +66,7 @@ class Value(object):
     def needs_all_envs(self):
         if self._item.has_inv_query:
             return self._item.needs_all_envs
-        else:
-            return False
+        return False
 
     def ignore_failed_render(self):
         return self._item.ignore_failed_render
