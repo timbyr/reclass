@@ -143,7 +143,7 @@ def get_ref_parser(escape_character, reference_sentinels, export_sentinels):
 
     item = reference | export | string
     line = pp.OneOrMore(item) + pp.StringEnd()
-    return line
+    return line.leaveWhitespace()
 
 def get_simple_ref_parser(escape_character, reference_sentinels, export_sentinels):
     _ESCAPE = escape_character
@@ -158,4 +158,4 @@ def get_simple_ref_parser(escape_character, reference_sentinels, export_sentinel
     ref_close = pp.Literal(_REF_CLOSE).suppress()
     reference = (ref_open + pp.Group(string) + ref_close).setParseAction(_tag_with(REF))
     line = pp.StringStart() + pp.Optional(string) + reference + pp.Optional(string) + pp.StringEnd()
-    return line
+    return line.leaveWhitespace()

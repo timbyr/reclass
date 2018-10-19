@@ -22,7 +22,7 @@ class Value(object):
 
     def __init__(self, value, settings, uri, parse_string=True):
         self._settings = settings
-        self._uri = uri
+        self.uri = uri
         self.overwrite = False
         self._constant = False
         if isinstance(value, string_types):
@@ -30,7 +30,7 @@ class Value(object):
                 try:
                     self._item = self._parser.parse(value, self._settings)
                 except InterpolationError as e:
-                    e.uri = self._uri
+                    e.uri = self.uri
                     raise
             else:
                 self._item = ScaItem(value, self._settings)
@@ -40,10 +40,6 @@ class Value(object):
             self._item = DictItem(value, self._settings)
         else:
             self._item = ScaItem(value, self._settings)
-
-    @property
-    def uri(self):
-        return self._uri
 
     @property
     def constant(self):
@@ -102,7 +98,7 @@ class Value(object):
         try:
             return self._item.render(context, inventory)
         except InterpolationError as e:
-            e.uri = self._uri
+            e.uri = self.uri
             raise
 
     @property

@@ -17,37 +17,41 @@ from .scaitem import ScaItem
 
 from reclass.errors import ParseError
 from reclass.values.parser_funcs import STR, REF, INV
+import reclass.values.parser_funcs as parsers
 
 class Parser(object):
 
     def parse(self, value, settings):
-        self._settings = settings
-        dollars = value.count('$')
-        if dollars == 0:
-            # speed up: only use pyparsing if there is a $ in the string
-            return ScaItem(value, self._settings)
-        elif dollars == 1:
-            # speed up: try a simple reference
+        def full_parse():
             try:
-                tokens = self._settings.simple_ref_parser.leaveWhitespace().parseString(value).asList()
-            except pp.ParseException:
-                # fall back on the full parser
-                try:
-                    tokens = self._settings.ref_parser.leaveWhitespace().parseString(value).asList()
-                except pp.ParseException as e:
-                    raise ParseError(e.msg, e.line, e.col, e.lineno)
-        else:
-            # use the full parser
-            try:
-                tokens = self._settings.ref_parser.leaveWhitespace().parseString(value).asList()
+                return ref_parser.parseString(value).asList()
             except pp.ParseException as e:
                 raise ParseError(e.msg, e.line, e.col, e.lineno)
+
+        self._settings = settings
+        parser_settings = (settings.escape_character,
+                           settings.reference_sentinels,
+                           settings.export_sentinels)
+        ref_parser = parsers.get_ref_parser(*parser_settings)
+        simple_ref_parser = parsers.get_simple_ref_parser(*parser_settings)
+
+        sentinel_count = (value.count(settings.reference_sentinels[0]) +
+                          value.count(settings.export_sentinels[0]))
+        if sentinel_count == 0:
+            # speed up: only use pyparsing if there are sentinels in the value
+            return ScaItem(value, self._settings)
+        elif sentinel_count == 1:  # speed up: try a simple reference
+            try:
+                tokens = simple_ref_parser.parseString(value).asList()
+            except pp.ParseException:
+                tokens = full_parse()  # fall back on the full parser
+        else:
+            tokens = full_parse()  # use the full parser
 
         items = self._create_items(tokens)
         if len(items) == 1:
             return items[0]
-        else:
-            return CompItem(items, self._settings)
+        return CompItem(items, self._settings)
 
     _create_dict = { STR: (lambda s, v: ScaItem(v, s._settings)),
                      REF: (lambda s, v: s._create_ref(v)),

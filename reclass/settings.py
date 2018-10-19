@@ -6,7 +6,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import copy
-import reclass.values.parser_funcs
 from reclass.defaults import *
 
 from six import string_types
@@ -43,8 +42,6 @@ class Settings(object):
 
         self.group_errors = options.get('group_errors', OPT_GROUP_ERRORS)
 
-        self.ref_parser = reclass.values.parser_funcs.get_ref_parser(self.escape_character, self.reference_sentinels, self.export_sentinels)
-        self.simple_ref_parser = reclass.values.parser_funcs.get_simple_ref_parser(self.escape_character, self.reference_sentinels, self.export_sentinels)
 
     def __eq__(self, other):
         return isinstance(other, type(self)) \
