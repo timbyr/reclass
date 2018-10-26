@@ -21,26 +21,41 @@ import reclass.values.parser_funcs as parsers
 
 class Parser(object):
 
+    def __init__(self):
+        self._ref_parser = None
+        self._simple_parser = None
+        self._old_settings = None
+
+    @property
+    def ref_parser(self):
+        if self._ref_parser is None or self._settings != self._old_settings:
+            self._ref_parser = parsers.get_ref_parser(self._settings)
+            self._old_settings = self._settings
+        return self._ref_parser
+
+    @property
+    def simple_ref_parser(self):
+        if self._simple_parser is None or self._settings != self._old_settings:
+            self._simple_parser = parsers.get_simple_ref_parser(self._settings)
+            self._old_settings = self._settings
+        return self._simple_parser
+
     def parse(self, value, settings):
         def full_parse():
             try:
-                return ref_parser.parseString(value).asList()
+                return self.ref_parser.parseString(value).asList()
             except pp.ParseException as e:
                 raise ParseError(e.msg, e.line, e.col, e.lineno)
 
         self._settings = settings
-        ref_parser = parsers.get_ref_parser(settings)
-        simple_ref_parser = parsers.get_simple_ref_parser(settings)
-
         sentinel_count = (value.count(settings.reference_sentinels[0]) +
                           value.count(settings.export_sentinels[0]))
-
         if sentinel_count == 0:
             # speed up: only use pyparsing if there are sentinels in the value
             return ScaItem(value, self._settings)
         elif sentinel_count == 1:  # speed up: try a simple reference
             try:
-                tokens = simple_ref_parser.parseString(value).asList()
+                tokens = self.simple_ref_parser.parseString(value).asList()
             except pp.ParseException:
                 tokens = full_parse()  # fall back on the full parser
         else:
