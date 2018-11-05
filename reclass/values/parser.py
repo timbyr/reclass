@@ -16,8 +16,12 @@ from .refitem import RefItem
 from .scaitem import ScaItem
 
 from reclass.errors import ParseError
-from reclass.values.parser_funcs import STR, REF, INV
+from reclass.values.parser_funcs import tags
 import reclass.values.parser_funcs as parsers
+
+import collections
+import six
+
 
 class Parser(object):
 
@@ -43,7 +47,7 @@ class Parser(object):
     def parse(self, value, settings):
         def full_parse():
             try:
-                return self.ref_parser.parseString(value).asList()
+                return self.ref_parser.parseString(value)
             except pp.ParseException as e:
                 raise ParseError(e.msg, e.line, e.col, e.lineno)
 
@@ -55,30 +59,31 @@ class Parser(object):
             return ScaItem(value, self._settings)
         elif sentinel_count == 1:  # speed up: try a simple reference
             try:
-                tokens = self.simple_ref_parser.parseString(value).asList()
+                tokens = self.simple_ref_parser.parseString(value)
             except pp.ParseException:
                 tokens = full_parse()  # fall back on the full parser
         else:
             tokens = full_parse()  # use the full parser
 
+        tokens = parsers.listify(tokens)
         items = self._create_items(tokens)
         if len(items) == 1:
             return items[0]
         return CompItem(items, self._settings)
 
-    _create_dict = { STR: (lambda s, v: ScaItem(v, s._settings)),
-                     REF: (lambda s, v: s._create_ref(v)),
-                     INV: (lambda s, v: s._create_inv(v)) }
+    _item_builders = {tags.STR: (lambda s, v: ScaItem(v, s._settings)),
+                      tags.REF: (lambda s, v: s._create_ref(v)),
+                      tags.INV: (lambda s, v: s._create_inv(v)) }
 
     def _create_items(self, tokens):
-        return [ self._create_dict[t](self, v) for t, v in tokens ]
+        return [self._item_builders[t](self, v) for t, v in tokens ]
 
     def _create_ref(self, tokens):
-        items = [ self._create_dict[t](self, v) for t, v in tokens ]
+        items = [ self._item_builders[t](self, v) for t, v in tokens ]
         return RefItem(items, self._settings)
 
     def _create_inv(self, tokens):
-        items = [ ScaItem(v, self._settings) for t, v in tokens ]
+        items = [ScaItem(v, self._settings) for t, v in tokens]
         if len(items) == 1:
             return InvItem(items[0], self._settings)
         return InvItem(CompItem(items), self._settings)
