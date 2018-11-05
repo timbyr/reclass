@@ -23,7 +23,6 @@ import yaml
 from six import iteritems
 
 from reclass.settings import Settings
-from reclass.output.yaml_outputter import ExplicitDumper
 from reclass.datatypes import Entity, Classes, Parameters, Exports
 from reclass.errors import MappingFormatError, ClassNameResolveError, ClassNotFound, InvQueryClassNameResolveError, InvQueryClassNotFound, InvQueryError, InterpolationError, ResolveError
 from reclass.values.parser import Parser
@@ -39,7 +38,8 @@ class Core(object):
         self._settings = settings
         self._input_data = input_data
         if self._settings.ignore_class_notfound:
-            self._cnf_r = re.compile('|'.join([x for x in self._settings.ignore_class_notfound_regexp]))
+            self._cnf_r = re.compile(
+                '|'.join(self._settings.ignore_class_notfound_regexp))
 
     @staticmethod
     def _get_timestamp():
@@ -114,7 +114,9 @@ class Core(object):
 
         for klass in entity.classes.as_list():
             # class name contain reference
-            if klass.count('$') > 0:
+            num_references = klass.count(self._settings.reference_sentinels[0]) +\
+                             klass.count(self._settings.export_sentinels[0])
+            if num_references > 0:
                 try:
                     klass = str(self._parser.parse(klass, self._settings).render(merge_base.parameters.as_dict(), {}))
                 except ResolveError as e:
@@ -152,8 +154,16 @@ class Core(object):
 
     def _get_automatic_parameters(self, nodename, environment):
         if self._settings.automatic_parameters:
-            return Parameters({ '_reclass_': { 'name': { 'full': nodename, 'short': nodename.split('.')[0] },
-                                               'environment': environment } }, self._settings, '__auto__')
+            pars = {
+                '_reclass_': {
+                    'name': {
+                        'full': nodename,
+                        'short': nodename.split('.')[0]
+                    },
+                'environment': environment
+                }
+            }
+            return Parameters(pars, self._settings, '__auto__')
         else:
             return Parameters({}, self._settings, '')
 
@@ -162,13 +172,12 @@ class Core(object):
         for nodename in self._storage.enumerate_nodes():
             try:
                 node_base = self._storage.get_node(nodename, self._settings)
-                if node_base.environment == None:
+                if node_base.environment is None:
                     node_base.environment = self._settings.default_environment
             except yaml.scanner.ScannerError as e:
                 if self._settings.inventory_ignore_failed_node:
                     continue
-                else:
-                    raise
+                raise
 
             if all_envs or node_base.environment == environment:
                 try:
@@ -220,7 +229,8 @@ class Core(object):
             raise
 
     def _nodeinfo_as_dict(self, nodename, entity):
-        ret = {'__reclass__' : {'node': entity.name, 'name': nodename,
+        ret = {'__reclass__' : {'node': entity.name,
+                                'name': nodename,
                                 'uri': entity.uri,
                                 'environment': entity.environment,
                                 'timestamp': Core._get_timestamp()
