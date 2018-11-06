@@ -8,12 +8,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import pyparsing as pp
+import collections
+import enum
 import functools
+import pyparsing as pp
+import six
 
-STR = 1
-REF = 2
-INV = 3
+tags = enum.Enum('Tags', ['STR', 'REF', 'INV'])
 
 _OBJ = 'OBJ'
 _LOGICAL = 'LOGICAL'
@@ -41,6 +42,20 @@ def _tag_with(tag, transform=lambda x:x):
         token = transform(tokens[0])
         tokens[0] = (tag, token)
     return functools.partial(inner, tag)
+
+def _asList(x):
+    if isinstance(x, pp.ParseResults):
+        return x.asList()
+    return x
+
+def listify(w, modifier=_asList):
+    if (isinstance(w, collections.Iterable) and
+            not isinstance(w, six.string_types)):
+        cls = type(w)
+        if cls == pp.ParseResults:
+            cls = list
+        return cls([listify(x) for x in w])
+    return modifier(w)
 
 def get_expression_parser():
     sign = pp.Optional(pp.Literal('-'))
@@ -117,10 +132,10 @@ def get_ref_parser(settings):
     ref_escape_close = pp.Literal(_REF_ESCAPE_CLOSE).setParseAction(pp.replaceWith(_REF_CLOSE))
     ref_text = pp.CharsNotIn(_REF_EXCLUDES) | pp.CharsNotIn(_REF_CLOSE_FIRST, exact=1)
     ref_content = pp.Combine(pp.OneOrMore(ref_not_open + ref_not_close + ref_text))
-    ref_string = pp.MatchFirst([double_escape, ref_escape_open, ref_escape_close, ref_content]).setParseAction(_tag_with(STR))
+    ref_string = pp.MatchFirst([double_escape, ref_escape_open, ref_escape_close, ref_content]).setParseAction(_tag_with(tags.STR))
     ref_item = pp.Forward()
     ref_items = pp.OneOrMore(ref_item)
-    reference = (ref_open + pp.Group(ref_items) + ref_close).setParseAction(_tag_with(REF))
+    reference = (ref_open + pp.Group(ref_items) + ref_close).setParseAction(_tag_with(tags.REF))
     ref_item << (reference | ref_string)
 
     inv_open = pp.Literal(_INV_OPEN).suppress()
@@ -131,13 +146,17 @@ def get_ref_parser(settings):
     inv_escape_close = pp.Literal(_INV_ESCAPE_CLOSE).setParseAction(pp.replaceWith(_INV_CLOSE))
     inv_text = pp.CharsNotIn(_INV_CLOSE_FIRST)
     inv_content = pp.Combine(pp.OneOrMore(inv_not_close + inv_text))
-    inv_string = pp.MatchFirst([double_escape, inv_escape_open, inv_escape_close, inv_content]).setParseAction(_tag_with(STR))
+    inv_string = pp.MatchFirst(
+        [double_escape, inv_escape_open, inv_escape_close, inv_content]
+    ).setParseAction(_tag_with(tags.STR))
     inv_items = pp.OneOrMore(inv_string)
-    export = (inv_open + pp.Group(inv_items) + inv_close).setParseAction(_tag_with(INV))
+    export = (inv_open + pp.Group(inv_items) + inv_close).setParseAction(_tag_with(tags.INV))
 
     text = pp.CharsNotIn(_EXCLUDES) | pp.CharsNotIn('', exact=1)
     content = pp.Combine(pp.OneOrMore(ref_not_open + inv_not_open + text))
-    string = pp.MatchFirst([double_escape, ref_escape_open, inv_escape_open, content]).setParseAction(_tag_with(STR))
+    string = pp.MatchFirst(
+        [double_escape, ref_escape_open, inv_escape_open, content]
+    ).setParseAction(_tag_with(tags.STR))
 
     item = reference | export | string
     line = pp.OneOrMore(item) + s_end
@@ -151,9 +170,9 @@ def get_simple_ref_parser(settings):
     INV_OPEN, INV_CLOSE = settings.export_sentinels
     EXCLUDES = ESCAPE + REF_OPEN + REF_CLOSE + INV_OPEN + INV_CLOSE
 
-    string = pp.CharsNotIn(EXCLUDES).setParseAction(_tag_with(STR))
+    string = pp.CharsNotIn(EXCLUDES).setParseAction(_tag_with(tags.STR))
     ref_open = pp.Literal(REF_OPEN).suppress()
     ref_close = pp.Literal(REF_CLOSE).suppress()
-    reference = (ref_open + pp.Group(string) + ref_close).setParseAction(_tag_with(REF))
+    reference = (ref_open + pp.Group(string) + ref_close).setParseAction(_tag_with(tags.REF))
     line = pp.StringStart() + pp.Optional(string) + reference + pp.Optional(string) + s_end
     return line.leaveWhitespace()
