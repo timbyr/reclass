@@ -39,7 +39,7 @@ class Settings(object):
             defaults.OPT_IGNORE_CLASS_NOTFOUND_REGEXP,
         'ignore_class_notfound_warning':
             defaults.OPT_IGNORE_CLASS_NOTFOUND_WARNING,
-        'ignore_overwritten_missing_referencesdefaults.':
+        'ignore_overwritten_missing_references':
             defaults.OPT_IGNORE_OVERWRITTEN_MISSING_REFERENCES,
         'group_errors': defaults.OPT_GROUP_ERRORS,
         'compose_node_name': defaults.OPT_COMPOSE_NODE_NAME,
