@@ -12,7 +12,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os, sys
-import fnmatch
 import yaml
 from reclass.output.yaml_outputter import ExplicitDumper
 from reclass.storage import ExternalNodeStorageBase
