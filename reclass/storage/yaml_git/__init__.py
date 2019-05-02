@@ -11,7 +11,6 @@ import collections
 import distutils.version
 import errno
 import fcntl
-import fnmatch
 import os
 import time
 
