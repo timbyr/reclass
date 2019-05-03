@@ -212,7 +212,7 @@ class GitRepo(object):
             branch = {}
             files = self.files_in_branch(bname)
             for file in files:
-                if str(file.name).endswith(FILE_EXTENSION):
+                if file.name.endswith(FILE_EXTENSION):
                     name = os.path.splitext(file.name)[0]
                     relpath = os.path.dirname(file.path)
                     if callable(self._class_name_mangler):
