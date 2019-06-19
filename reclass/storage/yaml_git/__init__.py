@@ -11,7 +11,6 @@ import collections
 import distutils.version
 import errno
 import fcntl
-import fnmatch
 import os
 import time
 
@@ -34,7 +33,7 @@ import reclass.errors
 from reclass.storage import ExternalNodeStorageBase
 from reclass.storage.yamldata import YamlData
 
-FILE_EXTENSION = '.yml'
+FILE_EXTENSION = ('.yml', '.yaml')
 STORAGE_NAME = 'yaml_git'
 
 def path_mangler(inventory_base_uri, nodes_uri, classes_uri):
@@ -213,7 +212,7 @@ class GitRepo(object):
             branch = {}
             files = self.files_in_branch(bname)
             for file in files:
-                if fnmatch.fnmatch(file.name, '*{0}'.format(FILE_EXTENSION)):
+                if file.name.endswith(FILE_EXTENSION):
                     name = os.path.splitext(file.name)[0]
                     relpath = os.path.dirname(file.path)
                     if callable(self._class_name_mangler):
