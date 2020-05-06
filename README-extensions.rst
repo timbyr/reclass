@@ -33,7 +33,7 @@ To control the feature there are two options available:
 .. code-block:: yaml
 
   ignore_class_notfound: False
-  ignore_class_regexp: ['.*']
+  ignore_class_notfound_regexp: ['.*']
 
 If you set regexp pattern to ``service.*`` all missing classes starting 'service.' will be logged with warning, but will not
 fail to return rendered reclass. Assuming all parameter interpolation passes.
