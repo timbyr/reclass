@@ -218,7 +218,7 @@ class GitRepo(object):
                     if callable(self._class_name_mangler):
                         relpath, name = self._class_name_mangler(relpath, name)
                     if name in ret:
-                        raise reclass.errors.DuplicateNodeNameError(self.name + ' - ' + bname, name, ret[name], path)
+                        raise reclass.errors.DuplicateNodeNameError(self.url + ' - ' + bname, name, ret[name], file)
                     else:
                         branch[name] = file
             ret[bname] = branch
@@ -233,7 +233,7 @@ class GitRepo(object):
                 if callable(self._node_name_mangler):
                     relpath, node_name = self._node_name_mangler(relpath, node_name)
                 if node_name in ret:
-                    raise reclass.errors.DuplicateNodeNameError(self.name, name, files[name], path)
+                    raise reclass.errors.DuplicateNodeNameError(self.url, name, ret[node_name].path, file.path)
                 else:
                     ret[node_name] = file
         return ret

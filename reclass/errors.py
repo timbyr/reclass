@@ -117,7 +117,7 @@ class NodeNotFound(NotFoundError):
 
 class InterpolationError(ReclassException):
 
-    def __init__(self, msg, rc=posix.EX_DATAERR, nodename='', uri=None, context=None, tbFlag=True):
+    def __init__(self, msg=None, rc=posix.EX_DATAERR, nodename='', uri=None, context=None, tbFlag=True):
         super(InterpolationError, self).__init__(rc=rc, msg=msg, tbFlag=tbFlag)
         self.nodename = nodename
         self.uri = uri
@@ -330,7 +330,7 @@ class MappingFormatError(MappingError):
 
 class NameError(ReclassException):
 
-    def __init__(self, msg, rc=posix.EX_DATAERR):
+    def __init__(self, msg=None, rc=posix.EX_DATAERR):
         super(NameError, self).__init__(rc=rc, msg=msg)
 
 
