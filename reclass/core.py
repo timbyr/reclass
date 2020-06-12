@@ -72,26 +72,30 @@ class Core(object):
             key = '/{0}/'.format(key)
         return key, list(lexer)
 
-    def _get_class_mappings_entity(self, nodename):
+    def _get_class_mappings_entity(self, entity):
         if not self._class_mappings:
             return Entity(self._settings, name='empty (class mappings)')
         c = Classes()
+        if self._settings.class_mappings_match_path:
+            matchname = entity.pathname
+        else:
+            matchname = entity.name
         for mapping in self._class_mappings:
             matched = False
             key, klasses = Core._shlex_split(mapping)
             if key[0] == ('/'):
-                matched = Core._match_regexp(key[1:-1], nodename)
+                matched = Core._match_regexp(key[1:-1], matchname)
                 if matched:
                     for klass in klasses:
                         c.append_if_new(matched.expand(klass))
 
             else:
-                if Core._match_glob(key, nodename):
+                if Core._match_glob(key, matchname):
                     for klass in klasses:
                         c.append_if_new(klass)
 
         return Entity(self._settings, classes=c,
-                      name='class mappings for node {0}'.format(nodename))
+                      name='class mappings for node {0}'.format(entity.name))
 
     def _get_input_data_entity(self):
         if not self._input_data:
@@ -207,7 +211,7 @@ class Core(object):
         if node_entity.environment == None:
             node_entity.environment = self._settings.default_environment
         base_entity = Entity(self._settings, name='base')
-        base_entity.merge(self._get_class_mappings_entity(node_entity.name))
+        base_entity.merge(self._get_class_mappings_entity(node_entity))
         base_entity.merge(self._get_input_data_entity())
         base_entity.merge_parameters(self._get_automatic_parameters(nodename, node_entity.environment))
         seen = {}
