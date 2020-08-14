@@ -1,0 +1,3 @@
+parameters:
+  loaded_from:
+    core_dns: v1

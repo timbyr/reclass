@@ -1,0 +1,4 @@
+parameters:
+  default_versions:
+    core_dns: v0
+    cluster_autoscaler: v0

@@ -1,0 +1,3 @@
+parameters:
+  loaded_from:
+    cluster_autoscaler: v0

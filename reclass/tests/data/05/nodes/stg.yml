@@ -1,0 +1,9 @@
+classes:
+  - versions.stg
+  - components.common
+
+parameters:
+  kapitan:
+    vars:
+      target: stg
+

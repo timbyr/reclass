@@ -1,0 +1,9 @@
+classes:
+  - versions.prd
+  - components.common
+
+parameters:
+  kapitan:
+    vars:
+      target: prd
+

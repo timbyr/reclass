@@ -1,0 +1,3 @@
+classes:
+  - components.core-dns.${default_versions:core_dns}
+  - components.cluster-autoscaler.${default_versions:cluster_autoscaler}
