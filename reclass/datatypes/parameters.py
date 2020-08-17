@@ -184,7 +184,12 @@ class Parameters(object):
             else:
                 value = self._merge_recurse(cur.get(key), value)
             cur[key] = value
-        cur.uri = new.uri
+        
+        try:
+            cur.uri = new.uri
+        except AttributeError:
+            cur['uri'] = new.uri
+
         return cur
 
     def _merge_recurse(self, cur, new):

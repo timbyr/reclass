@@ -1,0 +1,6 @@
+classes:
+  - versions.default_versions
+parameters:
+  default_versions:
+    core_dns: v1
+    cluster_autoscaler: v1

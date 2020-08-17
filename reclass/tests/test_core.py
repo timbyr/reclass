@@ -97,6 +97,22 @@ class TestCore(unittest.TestCase):
         node = reclass.nodeinfo('node1')
         params = { 'test1': 1, 'test3': 3, '_reclass_': {'environment': u'base', 'name': {'full': 'node1', 'short': 'node1'}}}
         self.assertEqual(node['parameters'], params)
+    
+    def test_merging_of_parameters_before_class_interpolation_enabling_overrides(self):
+        reclass = self._core('05')
+
+        dev = reclass.nodeinfo('dev')
+        stg = reclass.nodeinfo('stg')
+        prd = reclass.nodeinfo('prd')
+
+        self.assertEqual(dev['parameters']['loaded_from']['core_dns'], 'v1')
+        self.assertEqual(dev['parameters']['loaded_from']['cluster_autoscaler'], 'v1')
+
+        self.assertEqual(stg['parameters']['loaded_from']['core_dns'], 'v1')
+        self.assertEqual(stg['parameters']['loaded_from']['cluster_autoscaler'], 'v0')
+
+        self.assertEqual(prd['parameters']['loaded_from']['core_dns'], 'v0')
+        self.assertEqual(prd['parameters']['loaded_from']['cluster_autoscaler'], 'v0')
 
 
 if __name__ == '__main__':
