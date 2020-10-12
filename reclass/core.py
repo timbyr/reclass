@@ -125,9 +125,11 @@ class Core(object):
                     klass = str(self._parser.parse(klass, self._settings).render(merge_base.parameters.as_dict(), {}))
                 except ResolveError as e:
                     try:
+                        # make copy of context.parameters to avoid polluting the original with this interpolation
+                        params = copy.deepcopy(context.parameters)
                         # interpolate parameters before using them in the klass name. Used for overrides
-                        context.parameters.initialise_interpolation()
-                        klass = str(self._parser.parse(klass, self._settings).render(context.parameters.as_dict(), {}))
+                        params.initialise_interpolation()
+                        klass = str(self._parser.parse(klass, self._settings).render(params.as_dict(), {}))
                     except ResolveError as e:
                         raise ClassNameResolveError(klass, nodename, entity.uri)
 
