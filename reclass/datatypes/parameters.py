@@ -184,11 +184,7 @@ class Parameters(object):
             else:
                 value = self._merge_recurse(cur.get(key), value)
             cur[key] = value
-        
-        try:
-            cur.uri = new.uri
-        except AttributeError:
-            cur['uri'] = new.uri
+        cur.uri = new.uri
 
         return cur
 
