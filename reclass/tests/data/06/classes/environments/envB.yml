@@ -1,0 +1,2 @@
+applications:
+  - appB # envB just adds their custom application B

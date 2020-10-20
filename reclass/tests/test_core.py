@@ -114,6 +114,14 @@ class TestCore(unittest.TestCase):
         self.assertEqual(prd['parameters']['loaded_from']['core_dns'], 'v0')
         self.assertEqual(prd['parameters']['loaded_from']['cluster_autoscaler'], 'v0')
 
+    def test_application_removal(self):
+        reclass = self._core('06')
+
+        A_node = reclass.nodeinfo('A_node')
+        B_node = reclass.nodeinfo('B_node')
+
+        self.assertEqual(A_node['applications'], A_node['parameters']['expected_apps'])
+        self.assertEqual(B_node['applications'], B_node['parameters']['expected_apps'])
 
 if __name__ == '__main__':
     unittest.main()
