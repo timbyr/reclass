@@ -103,7 +103,7 @@ class Core(object):
         p = Parameters(self._input_data, self._settings)
         return Entity(self._settings, parameters=p, name='input data')
 
-    def _recurse_entity(self, entity, merge_base=None, context=None, seen=None, nodename=None, environment=None):
+    def _recurse_entity(self, entity, merge_base=None, seen=None, nodename=None, environment=None):
         if seen is None:
             seen = {}
 
@@ -112,9 +112,6 @@ class Core(object):
 
         if merge_base is None:
             merge_base = Entity(self._settings, name='empty (@{0})'.format(nodename))
-
-        if context is None:
-            context = Entity(self._settings, name='empty (@{0})'.format(nodename))
 
         for klass in entity.classes.as_list():
             # class name contain reference
@@ -151,8 +148,8 @@ class Core(object):
 
                 # on every iteration, we pass what we have so far into the
                 # recursive descent …
-                descent = self._recurse_entity(class_entity, merge_base=merge_base, context=context,
-                                               seen=seen, nodename=nodename, environment=environment)
+                descent = self._recurse_entity(class_entity, merge_base=merge_base, seen=seen,
+                                               nodename=nodename, environment=environment)
                 # … therefore, we don't need to merge the result of the
                 # recursive descent as the result is a reference to the same
                 # merge_base object we passed to the call originally, with the
@@ -227,7 +224,7 @@ class Core(object):
         seen = {}
         merge_base = self._recurse_entity(base_entity, seen=seen, nodename=nodename,
                                           environment=node_entity.environment)
-        return self._recurse_entity(node_entity, merge_base=merge_base, context=merge_base, seen=seen,
+        return self._recurse_entity(node_entity, merge_base=merge_base, seen=seen,
                                     nodename=nodename, environment=node_entity.environment)
 
     def _nodeinfo(self, nodename, inventory):
