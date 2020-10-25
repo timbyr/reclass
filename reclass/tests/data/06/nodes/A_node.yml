@@ -1,0 +1,11 @@
+classes:
+  - applications.shared
+  - environments.envA
+
+parameters:
+  expected_apps:
+    - app1
+    - app2
+    - app3
+    - app5
+    - appA

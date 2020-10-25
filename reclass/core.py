@@ -103,7 +103,7 @@ class Core(object):
         p = Parameters(self._input_data, self._settings)
         return Entity(self._settings, parameters=p, name='input data')
 
-    def _recurse_entity(self, entity, merge_base=None, context=None, seen=None, nodename=None, environment=None):
+    def _recurse_entity(self, entity, merge_base=None, seen=None, nodename=None, environment=None):
         if seen is None:
             seen = {}
 
@@ -113,25 +113,24 @@ class Core(object):
         if merge_base is None:
             merge_base = Entity(self._settings, name='empty (@{0})'.format(nodename))
 
-        if context is None:
-            context = Entity(self._settings, name='empty (@{0})'.format(nodename))
-
         for klass in entity.classes.as_list():
             # class name contain reference
             num_references = klass.count(self._settings.reference_sentinels[0]) +\
                              klass.count(self._settings.export_sentinels[0])
             if num_references > 0:
+                # Make a copy of merge_base.parameters to avoid running into
+                # issues as new data is merged into merge_base.parameters.
+                # We need to make a new copy on each pass to ensure we don't
+                # try to resolve references using a stale set of parameters,
+                # as merge_base is updated in the loop.
+                mbparams = copy.deepcopy(merge_base.parameters)
+                # Enable interpolation for copy of parameters before using the
+                # copy to resolve references in class names
+                mbparams.initialise_interpolation()
                 try:
-                    klass = str(self._parser.parse(klass, self._settings).render(merge_base.parameters.as_dict(), {}))
+                    klass = str(self._parser.parse(klass, self._settings).render(mbparams.as_dict(), {}))
                 except ResolveError as e:
-                    try:
-                        # make copy of context.parameters to avoid polluting the original with this interpolation
-                        params = copy.deepcopy(context.parameters)
-                        # interpolate parameters before using them in the klass name. Used for overrides
-                        params.initialise_interpolation()
-                        klass = str(self._parser.parse(klass, self._settings).render(params.as_dict(), {}))
-                    except ResolveError as e:
-                        raise ClassNameResolveError(klass, nodename, entity.uri)
+                    raise ClassNameResolveError(klass, nodename, entity.uri)
 
             if klass not in seen:
                 try:
@@ -147,11 +146,15 @@ class Core(object):
                     e.uri = entity.uri
                     raise
 
-                descent = self._recurse_entity(class_entity, context=context, seen=seen,
+                # on every iteration, we pass what we have so far into the
+                # recursive descent …
+                descent = self._recurse_entity(class_entity, merge_base=merge_base, seen=seen,
                                                nodename=nodename, environment=environment)
-                # on every iteration, we merge the result of the recursive
-                # descent into what we have so far…
-                merge_base.merge(descent)
+                # … therefore, we don't need to merge the result of the
+                # recursive descent as the result is a reference to the same
+                # merge_base object we passed to the call originally, with the
+                # new values merged in …
+                assert descent == merge_base
                 seen[klass] = True
 
         # … and finally, we merge what we have at this level into the
@@ -221,7 +224,7 @@ class Core(object):
         seen = {}
         merge_base = self._recurse_entity(base_entity, seen=seen, nodename=nodename,
                                           environment=node_entity.environment)
-        return self._recurse_entity(node_entity, merge_base=merge_base, context=merge_base, seen=seen,
+        return self._recurse_entity(node_entity, merge_base=merge_base, seen=seen,
                                     nodename=nodename, environment=node_entity.environment)
 
     def _nodeinfo(self, nodename, inventory):

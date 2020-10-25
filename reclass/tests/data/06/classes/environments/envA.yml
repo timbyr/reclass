@@ -1,0 +1,4 @@
+applications:
+  - ~app4 # envA replaces app4 with app5 (think mariadb vs mysql)
+  - app5
+  - appA
