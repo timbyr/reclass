@@ -34,6 +34,11 @@ NOT_EQUAL = '!='
 IGNORE_ERRORS = '+IgnoreErrors'
 ALL_ENVS = '+AllEnvs'
 
+try:
+    collectionsAbc = collections.abc
+except:
+    collectionsAbc = collections
+
 
 s_end = pp.StringEnd()
 
@@ -49,7 +54,7 @@ def _asList(x):
     return x
 
 def listify(w, modifier=_asList):
-    if (isinstance(w, collections.Iterable) and
+    if (isinstance(w, collectionsAbc.Iterable) and
             not isinstance(w, six.string_types)):
         cls = type(w)
         if cls == pp.ParseResults:
