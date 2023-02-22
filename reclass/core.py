@@ -16,7 +16,7 @@ import time
 import re
 import fnmatch
 import shlex
-import string
+import os
 import sys
 import yaml
 
@@ -169,7 +169,9 @@ class Core(object):
                 '_reclass_': {
                     'name': {
                         'full': nodename,
-                        'short': nodename.split('.')[0]
+                        'short': nodename.split('.').pop(),
+                        'path': os.path.join(*nodename.split('.')),
+                        'parts': nodename.split('.')
                     },
                 'environment': environment
                 }
